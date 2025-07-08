@@ -1,9 +1,10 @@
 import { FaUser, FaCheckCircle, FaClock, FaEnvelope } from "react-icons/fa";
 
-const DashboardCards = ({ stats }) => {
+const DashboardCards = ({ stats, onCardClick }) => {
   const cards = [
     {
       label: "Total Patients",
+      key: "patients",
       value: stats.patients,
       icon: <FaUser className="text-blue-600 text-2xl" />,
       color: "bg-blue-50",
@@ -11,6 +12,7 @@ const DashboardCards = ({ stats }) => {
     },
     {
       label: "Confirmed Appointments",
+      key: "confirmed",
       value: stats.confirmed,
       icon: <FaCheckCircle className="text-green-600 text-2xl" />,
       color: "bg-green-50",
@@ -18,6 +20,7 @@ const DashboardCards = ({ stats }) => {
     },
     {
       label: "Upcoming Appointments",
+      key: "upcoming",
       value: stats.upcoming,
       icon: <FaClock className="text-yellow-600 text-2xl" />,
       color: "bg-yellow-50",
@@ -25,6 +28,7 @@ const DashboardCards = ({ stats }) => {
     },
     {
       label: "Unread Messages",
+      key: "unreadChats",
       value: stats.unreadChats,
       icon: <FaEnvelope className="text-red-600 text-2xl" />,
       color: "bg-red-50",
@@ -37,7 +41,8 @@ const DashboardCards = ({ stats }) => {
       {cards.map((card, index) => (
         <div
           key={index}
-          className={`p-5 rounded-xl shadow hover:shadow-md transition ${card.color} flex items-center gap-4`}
+          onClick={() => onCardClick(card.key)} 
+          className={`p-5 rounded-xl shadow hover:shadow-md transition ${card.color} flex items-center gap-4 cursor-pointer`}
         >
           <div className="relative">
             <div className="bg-white p-4 rounded-full shadow">{card.icon}</div>
@@ -57,3 +62,5 @@ const DashboardCards = ({ stats }) => {
 };
 
 export default DashboardCards;
+
+
