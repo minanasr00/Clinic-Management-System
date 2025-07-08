@@ -15,8 +15,8 @@ const AppointmentStatusPie = () => {
     datasets: [
       {
         label: "Appointments",
-        data: [32, 18],
-        backgroundColor: ["#2563EB", "#F59E0B"], 
+        data: [32, 18], // عدد المواعيد المؤكدة مقابل المعلقة
+        backgroundColor: ["#2563EB", "#F59E2B"], // blue, amber
         borderWidth: 0.5,
       },
     ],
@@ -36,7 +36,7 @@ const AppointmentStatusPie = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-2 h-fit">
-      <h2 className="text-lg font-semibold text-blue-900 mb-2">
+      <h2 className="text-lg font-semibold text-gray-900 mb-2">
         Appointment Status
       </h2>
       <div className="w-500 max-w-sm mx-auto">

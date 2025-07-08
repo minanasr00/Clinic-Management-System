@@ -6,44 +6,43 @@ const daysShort = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 export default function CustomCalendar({ selectedDate, setSelectedDate }) {
   const [currentMonth, setCurrentMonth] = useState(dayjs());
 
-  const startDay = currentMonth.startOf("month").day();
-  const daysInMonth = currentMonth.daysInMonth();
+  const startOfMonth = currentMonth.startOf("month");
+  const endOfMonth = currentMonth.endOf("month");
+  const today = dayjs();
 
   const generateCalendar = () => {
     const calendar = [];
-    let dayCount = 1;
+    const startWeek = startOfMonth.startOf("week");
+    const endWeek = endOfMonth.endOf("week");
+    let current = startWeek;
 
-    for (let week = 0; week < 6; week++) {
-      const row = [];
-      for (let i = 1; i <= 7; i++) {
-        const dayIndex = (i + 6) % 7; 
-        const cellIndex = week * 7 + dayIndex;
-
-        if (cellIndex < startDay - 1 || dayCount > daysInMonth) {
-          row.push(null);
-        } else {
-          row.push(dayCount++);
-        }
+    while (current.isBefore(endWeek, "day")) {
+      const week = [];
+      for (let i = 0; i < 7; i++) {
+        week.push(current);
+        current = current.add(1, "day");
       }
-      calendar.push(row);
+      calendar.push(week);
     }
 
     return calendar;
   };
 
   const handleSelect = (day) => {
-    const dateStr = currentMonth.date(day).format("YYYY-MM-DD");
-    setSelectedDate(dateStr);
+    if (day.isSame(currentMonth, "month")) {
+      const dateStr = day.format("YYYY-MM-DD");
+      setSelectedDate(dateStr);
+    }
   };
 
   const calendar = generateCalendar();
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-sm ml-10 mt-15 pb-0">
+    <div className="bg-white p-6 rounded-xl shadow w-full h-fit flex flex-col justify-between">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <button
-          className="text-2xl font-bold text-gray-400 hover:text-gray-600 cursor-pointer"
+          className="text-xl font-bold text-gray-500 hover:text-sky-700 transition"
           onClick={() => setCurrentMonth(currentMonth.subtract(1, "month"))}
         >
           ❮
@@ -52,59 +51,53 @@ export default function CustomCalendar({ selectedDate, setSelectedDate }) {
           {currentMonth.format("MMMM YYYY")}
         </h2>
         <button
-          className="text-2xl font-bold text-gray-400 hover:text-gray-600"
+          className="text-xl font-bold text-gray-500 hover:text-sky-700 transition"
           onClick={() => setCurrentMonth(currentMonth.add(1, "month"))}
         >
           ❯
         </button>
       </div>
 
-      {/* Day headers */}
-      <div className="grid grid-cols-7 gap-y-2 text-center text-sm  text-blue-900 font-semibold mt-10">
-        {daysShort.map((day) => (
-          <div key={day}>{day}</div>
-        ))}
-      </div>
+      {/* Days of week */}
+      <div className="grid grid-cols-7 text-center text-sm font-semibold text-gray-600 mb-2">
+  {daysShort.map((day) => (
+    <div key={day} className="flex items-center justify-center h-10 w-10">
+      {day}
+    </div>
+  ))}
+</div>
+
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1 text-center text-sm mt-2">
+      <div className="grid grid-cols-7 gap-2 text-center text-sm flex-grow">
         {calendar.flat().map((day, index) => {
-          const isSelected =
-            day && selectedDate === currentMonth.date(day).format("YYYY-MM-DD");
+          const isToday = day.isSame(today, "day");
+          const isInMonth = day.isSame(currentMonth, "month");
+          const isSelected = selectedDate === day.format("YYYY-MM-DD");
+
           return (
             <button
-              key={index}
-              onClick={() => day && handleSelect(day)}
-              className={`w-9 h-9 flex items-center justify-center rounded-full transition 
-                ${
-                  isSelected
-                    ? "bg-blue-900 text-white font-bold"
-                    : day
-                    ? "text-gray-800 hover:bg-blue-100"
-                    : "text-transparent"
-                }`}
-            >
-              {day || ""}
-            </button>
+  key={index}
+  onClick={() => handleSelect(day)}
+  disabled={!isInMonth}
+  className={`w-10 h-10 flex items-center justify-center rounded-full transition font-medium 
+    ${
+      isSelected
+        ? "bg-sky-700 text-white"
+        : isToday
+        ? "bg-blue-100 text-sky-800"
+        : "text-gray-800"
+    }
+    ${!isInMonth ? "opacity-30 cursor-not-allowed" : "hover:bg-blue-100"}
+  `}
+>
+  {day.date()}
+</button>
+
           );
         })}
       </div>
-
-      {/* Bottom Buttons */}
-      {/* <div className="flex justify-between mt-6">
-        <button
-          onClick={() => setSelectedDate("")}
-          className="px-5 py-2 text-sm rounded-lg border border-gray-400 text-gray-700 hover:bg-gray-100"
-        >
-          Clear
-        </button>
-        <button
-          onClick={() => alert("Selected: " + selectedDate)}
-          className="px-5 py-2 text-sm rounded-lg bg-blue-900 text-white hover:bg-blue-800"
-        >
-          Select
-        </button>
-      </div> */}
     </div>
   );
 }
+
