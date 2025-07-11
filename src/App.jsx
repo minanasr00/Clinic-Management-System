@@ -13,6 +13,8 @@ import MainLayout from './pages/MainLayout/MainLayout';
 import Layout from './pages/PatientView/Layout';
 import MedicalHistory from './pages/PatientView/MedicalHistory/MedicalHistory';
 import Payment from './pages/PatientView/Payment/Payment';
+import BookAppointment from './pages/PatientView/BookAppointment/BookAppointment';
+
 const routes = [
   {
     path: '/', element: <MainLayout></MainLayout>, children: [
@@ -21,7 +23,8 @@ const routes = [
           { path: "/", element:<Navigate to="/Home" replace /> }, 
           { path: "Home", element: <Home></Home> }, 
           { path: "Medical history", element: <MedicalHistory></MedicalHistory> },
-          {path : "payment" , element :<Payment></Payment>}
+          {path: "Book Appointment", element: <BookAppointment></BookAppointment> },
+          { path: "payment", element: <Payment></Payment> },
       ] },
       { path: "/login", element: <Login></Login> },
       {path:"/register",element:<Register></Register>}      

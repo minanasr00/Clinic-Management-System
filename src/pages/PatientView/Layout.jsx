@@ -6,7 +6,7 @@ import { TiThMenuOutline } from "react-icons/ti";
 
 export default function Layout() {
      const [activeNav, setActiveNav] = useState()
-    const navItems = ['Home', 'Medical history', 'About Us']
+    const navItems = ['Home', 'Medical history']
     const ref = useRef(null)
     return <>
          <header className="bg-white shadow-sm px-6 py-4 text-[#0F141A]">
@@ -34,9 +34,11 @@ export default function Layout() {
                         {item}
                       </Link>
                     ))}
-                    <button className="bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors">
+                    <Link onClick={()=>{setActiveNav("Book Appointment")}} to={"Book Appointment"} className={`${activeNav == "Book Appointment" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
                       Book Appointment
-                    </button>
+                      
+                      
+                    </Link>
                     </div>
                     <div>
                         <TiThMenuOutline className='sm:block md:hidden text-2xl text-[#0F141A]' onClick={() => {

@@ -8,6 +8,6 @@ export default function PageNotFound() {
         <img src={img} className="w-full h-screen object-cover object-center relative" alt="" />
         <button onClick={() => {
             navigate("/")
-        }}  className="absolute top-[59%] left-[44%]  px-19 py-2 text-white"> 🔗</button>
+        }}  className="absolute top-[59%] left-[44%]  px-19 py-2 text-white bg-black rounded-3xl hover:bg-gray-600"> go to home</button>
   </div>
 }
