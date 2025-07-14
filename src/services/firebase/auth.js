@@ -7,6 +7,7 @@ import {
     signOut,
 } from "firebase/auth";
 
+
 export async function signIn( email , password){
     return signInWithEmailAndPassword(auth , email , password )
 }
@@ -29,3 +30,4 @@ export const handleSignOut = async () => {
     console.error("Error signing out: ", error);
   }
 };
+

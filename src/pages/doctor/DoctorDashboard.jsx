@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { FaTachometerAlt, FaCalendarAlt, FaUserInjured, FaUserNurse, FaFilePrescription } from "react-icons/fa";
+import { useNavigate } from "react-router";
+import { handleSignOut } from "../../services/firebase/auth";
 
 const DoctorDashboard = () => {
   const [activeItem, setActiveItem] = useState("Dashboard");
+  const navigate = useNavigate();
   return (
     <div className="flex h-screen">
       <aside className="w-64 bg-[#f7fafc] text-black p-4">
@@ -19,11 +22,17 @@ const DoctorDashboard = () => {
         </div>
 
         <nav className="space-y-4">
-          <SidebarItem icon={<FaTachometerAlt />} label="Dashboard" activeItem={activeItem} setActiveItem={setActiveItem} />
-          <SidebarItem icon={<FaCalendarAlt />} label="Appointments" activeItem={activeItem} setActiveItem={setActiveItem} />
-          <SidebarItem icon={<FaUserInjured />} label="Patients" activeItem={activeItem} setActiveItem={setActiveItem} />
-          <SidebarItem icon={<FaUserNurse />} label="Assistants" activeItem={activeItem} setActiveItem={setActiveItem} />
-          <SidebarItem icon={<FaFilePrescription />} label="Prescriptions" activeItem={activeItem} setActiveItem={setActiveItem} />
+          <SidebarItem icon={<FaTachometerAlt />} label="Dashboard" activeItem={activeItem} setActiveItem={setActiveItem} onClick={()=>{navigate("/DoctorDashboard")}}  />
+          <SidebarItem icon={<FaCalendarAlt />} label="Appointments" activeItem={activeItem} setActiveItem={setActiveItem} onClick={()=>{navigate("/AppointmentsPage")}} />
+          <SidebarItem icon={<FaUserInjured />} label="Patients" activeItem={activeItem} setActiveItem={setActiveItem} onClick={()=>{navigate("/PatientState")}} />
+          <SidebarItem icon={<FaUserNurse />} label="Assistants" activeItem={activeItem} setActiveItem={setActiveItem} onClick={()=>{navigate("/AddAssistantPage")}} />
+          <SidebarItem icon={<FaFilePrescription />} label="Prescriptions" activeItem={activeItem} setActiveItem={setActiveItem} onClick={() => { navigate("/") }} />
+          <button onClick={() => {
+                handleSignOut()
+                navigate("/")
+              }} className='bg-red-700 w-full text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
+                      sign Out
+                    </button>
         </nav>
       </aside>
 

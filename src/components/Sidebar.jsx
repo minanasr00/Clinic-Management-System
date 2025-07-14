@@ -1,5 +1,5 @@
 // Sidebar.jsx
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   CalendarDays,
@@ -9,13 +9,14 @@ import {
   LogOut,
 } from "lucide-react";
 import { FiMessageCircle } from "react-icons/fi"; 
+import { handleSignOut } from "../services/firebase/auth";
 
 const links = [
-  { to: "/dashboard", label: "Dashboard", icon: <Home size={20} /> },
-  { to: "/appointments", label: "Appointments", icon: <CalendarDays size={20} /> },
-  { to: "/patients", label: "Patients", icon: <Users2 size={20} /> },
+  { to: "/assistant/dashboard", label: "Dashboard", icon: <Home size={20} /> },
+  { to: "/assistant/appointments", label: "Appointments", icon: <CalendarDays size={20} /> },
+  { to: "/assistant/patients", label: "Patients", icon: <Users2 size={20} /> },
   {
-    to: "/messages",
+    to: "/assistant/messages",
     label: "Messages",
     icon: <FiMessageCircle size={20} strokeWidth={2} />,
   },
@@ -24,6 +25,7 @@ const links = [
 ];
 
 const Sidebar = () => {
+  const navigate = useNavigate()
   return (
     
     <aside className="h-screen w-64 bg-white border-r border-gray-200
@@ -65,6 +67,13 @@ const Sidebar = () => {
             <span>{label}</span>
           </NavLink>
         ))}
+         <button onClick={() => {
+                        
+                        handleSignOut()
+                        navigate("/")
+                      }} className='bg-red-700 text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
+                              sign Out
+                            </button>
       </nav>
     </aside>
   );

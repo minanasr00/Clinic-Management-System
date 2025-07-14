@@ -1,15 +1,20 @@
-import { useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import { Cross } from 'lucide-react'
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet, useNavigate } from 'react-router';
 import { TiThMenuOutline } from "react-icons/ti";
+import { handleSignOut } from '../../services/firebase/auth';
+import { AuthContext } from '../../context/Authcontext';
+
 
 
 export default function Layout() {
-     const [activeNav, setActiveNav] = useState()
+  const [activeNav, setActiveNav] = useState()
+  const { setLoading } = useContext(AuthContext)
     const navItems = ['Home', 'Medical history']
-    const ref = useRef(null)
+  const ref = useRef(null)
+  const navigate = useNavigate()
     return <>
-         <header className="bg-white shadow-sm px-6 py-4 text-[#0F141A]">
+        <header className="bg-white shadow-sm px-6 py-4 text-[#0F141A]">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                   <div className="flex items-center space-x-1">
                     <div className="w-8 h-8 bg-[#0F141A] rounded-full flex items-center justify-center">
@@ -36,9 +41,14 @@ export default function Layout() {
                     ))}
                     <Link onClick={()=>{setActiveNav("Book Appointment")}} to={"Book Appointment"} className={`${activeNav == "Book Appointment" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
                       Book Appointment
-                      
-                      
                     </Link>
+              <button onClick={() => {
+                setLoading(true)
+                handleSignOut()
+                navigate("/")
+              }} className='bg-red-700 text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
+                      sign Out
+                    </button>
                     </div>
                     <div>
                         <TiThMenuOutline className='sm:block md:hidden text-2xl text-[#0F141A]' onClick={() => {

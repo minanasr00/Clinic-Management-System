@@ -3,6 +3,7 @@ import { Stethoscope, Heart, Pill, Cross } from 'lucide-react'
 import { AuthContext } from './../../../context/Authcontext';
 import img from "../../../assets/heroSec.jpg"
 import docImg from "../../../assets/doctorImg.jpg"
+import { useContext } from 'react';
 
 export default function Home() {
     const services = [
@@ -32,7 +33,11 @@ export default function Home() {
     }
     return icons[iconName]
   }
-
+  const { user, role } = useContext(AuthContext);
+  console.log(user, role);
+  
+  
+  
   return (
     <div className="min-h-screen bg-gray-50 px-15 pt-5">   
       <section className="relative max-w-6xl h-96 md:h-[500px] overflow-hidden rounded-3xl mx-auto mt-6">
