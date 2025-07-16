@@ -1,65 +1,117 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { getScheduledAppointments } from '../../../services/firebase/patientServices';
+import { AuthContext } from '../../../context/Authcontext';
+import { useQuery} from '@tanstack/react-query';
+
+const appointmentSchema = z.object({
+  visitType: z.string().min(1, "Visit type is required"),
+  reasonForVisit: z.string().min(1, "Reason for visit is required"),
+  appointmentDate: z.string().min(1, "Date is required"),
+  appointmentTime: z.string().min(1, "Time is required"),
+  doctorId: z.string(), 
+  patientId: z.string()
+});
+
+const visitTypes = [
+  "General Checkup",
+  "Follow-up",
+  "Consultation",
+  "Emergency",
+  "Vaccination",
+  "Lab Test"
+];
+
+const visitReasons = [
+  "Routine Examination",
+  "Cold/Flu Symptoms",
+  "Injury/Pain",
+  "Chronic Condition",
+  "Medication Refill",
+  "Test Results",
+  "Other"
+];
 
 export default function AppointmentPage() {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
   const [timeSlots, setTimeSlots] = useState([]);
-  const [visitType, setVisitType] = useState('');
-  const [reasonForVisit, setReasonForVisit] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
+  const { user } = useContext(AuthContext);
 
-  const visitTypes = [
-    "General Checkup",
-    "Follow-up",
-    "Consultation",
-    "Emergency",
-    "Vaccination",
-    "Lab Test"
-  ];
+    const { data: scheduledAppointments, isLoading } = useQuery({
+    queryKey: ['appointments'],
+    queryFn: getScheduledAppointments,
+    refetchInterval: 1000, 
+    staleTime: 0,
+  });
 
-  const visitReasons = [
-    "Routine Examination",
-    "Cold/Flu Symptoms",
-    "Injury/Pain",
-    "Chronic Condition",
-    "Medication Refill",
-    "Test Results",
-    "Other"
-  ];
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isValid }
+  } = useForm({
+    resolver: zodResolver(appointmentSchema),
+    mode: 'onChange'
+  });
 
+  const selectedDate = watch('appointmentDate');
+  const selectedTime = watch('appointmentTime');
 
   useEffect(() => {
-    const today = new Date();
+    const fetchScheduledAppointments = async () => {
+      try {
+        const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
-    setSelectedDate(formattedDate);
-    generateTimeSlots(formattedDate);
-  }, []);
+        setValue('appointmentDate', formattedDate);
+        
+      if (!isLoading && scheduledAppointments) {
+    console.log("Appointments data:", scheduledAppointments);
+    generateTimeSlots(formattedDate, scheduledAppointments);
+  }
 
-  const generateTimeSlots = (date) => {
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
+      }
+    };
+    fetchScheduledAppointments();
+  }, [setValue, scheduledAppointments, isLoading]);
+
+  const generateTimeSlots = (date , appointments=[]) => {
     const today = new Date();
     const selected = new Date(date);
     const isToday = selected.toDateString() === today.toDateString();
     
     const slots = [];
-    const startHour = 8; 
-    const endHour = 19;  
+    const startHour = 11; 
+    const endHour = 22;  
     
     for (let hour = startHour; hour <= endHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        if (hour === endHour && minute > 0) break; 
+        if (hour === endHour && minute > 0) break;
         
-
         const period = hour >= 12 ? 'PM' : 'AM';
         const displayHour = hour % 12 || 12;
         const timeString = `${displayHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${period}`;
         
-
         const slotTime = new Date(selected);
         slotTime.setHours(hour, minute);
         
+        const isBooked = appointments.some(app => {
+        return (
+          app.getDate() === slotTime.getDate() &&
+          app.getMonth() === slotTime.getMonth() &&
+          app.getFullYear() === slotTime.getFullYear() &&
+          app.getHours() === slotTime.getHours() &&
+          app.getMinutes() === slotTime.getMinutes()
+        );
+      });
 
-        const available = !isToday || slotTime > new Date(today.getTime() + 60*60*1000);
+        const available = !isBooked && (!isToday || slotTime > new Date(today.getTime() + 30*60*1000));
         
         slots.push({
           time: timeString,
@@ -69,18 +121,17 @@ export default function AppointmentPage() {
     }
     
     setTimeSlots(slots);
-    setSelectedTime('');
+    setValue('appointmentTime', '');
   };
 
   const handleDateChange = (e) => {
     const date = e.target.value;
-    setSelectedDate(date);
-    generateTimeSlots(date);
+    setValue('appointmentDate', date);
+    
+    generateTimeSlots(date, scheduledAppointments);
   };
 
-  const handleConfirmAppointment = () => {
-    if (!isFormComplete()) return;
-    
+  const onSubmit = (data) => {
     setIsSubmitting(true);
     
     // Simulate API call/processing
@@ -91,18 +142,13 @@ export default function AppointmentPage() {
       // Reset form after 3 seconds
       setTimeout(() => {
         setAppointmentConfirmed(false);
+        reset();
       }, 3000);
     }, 1500);
   };
 
-  const isFormComplete = () => {
-    return visitType && reasonForVisit && selectedDate && selectedTime;
-  };
-
   const handleClearAll = () => {
-    setSelectedTime('');
-    setVisitType('');
-    setReasonForVisit('');
+    reset();
     setAppointmentConfirmed(false);
   };
 
@@ -111,8 +157,8 @@ export default function AppointmentPage() {
       <h1 className="text-2xl font-bold text-center mb-6">Make An Appointment</h1>
       
       <div className="mb-6 text-center">
-        <p className="text-lg font-semibold">Doctor: Dr. Masia Giura</p>
-        <p className="text-md text-gray-600">Hospital: Barala Hospital</p>
+        <p className="text-lg font-semibold">Doctor: Dr. Ashraf Mohamed</p>
+        <p className="text-md text-gray-600">Clinic: Ashraf Medical Center</p>
       </div>
 
       {appointmentConfirmed ? (
@@ -124,20 +170,21 @@ export default function AppointmentPage() {
             <p className="text-lg font-semibold">Appointment Confirmed!</p>
           </div>
           <p className="text-center mt-2">
-            Your appointment with Dr. Masia Giura is scheduled for {selectedDate} at {selectedTime}.
+            Your appointment with Dr. Ashraf Mohamed is scheduled for {selectedDate} at {selectedTime}.
           </p>
         </div>
       ) : (
-        <>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Select Visit Type
               </label>
               <select
-                value={visitType}
-                onChange={(e) => setVisitType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register('visitType')}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.visitType ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               >
                 <option value="">Choose visit type</option>
                 {visitTypes.map((type, index) => (
@@ -146,6 +193,9 @@ export default function AppointmentPage() {
                   </option>
                 ))}
               </select>
+              {errors.visitType && (
+                <p className="mt-1 text-sm text-red-600">{errors.visitType.message}</p>
+              )}
             </div>
 
             <div>
@@ -153,9 +203,10 @@ export default function AppointmentPage() {
                 Select Reason for Visit
               </label>
               <select
-                value={reasonForVisit}
-                onChange={(e) => setReasonForVisit(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                {...register('reasonForVisit')}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errors.reasonForVisit ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               >
                 <option value="">Choose reason</option>
                 {visitReasons.map((reason, index) => (
@@ -164,6 +215,9 @@ export default function AppointmentPage() {
                   </option>
                 ))}
               </select>
+              {errors.reasonForVisit && (
+                <p className="mt-1 text-sm text-red-600">{errors.reasonForVisit.message}</p>
+              )}
             </div>
           </div>
 
@@ -173,11 +227,16 @@ export default function AppointmentPage() {
             </label>
             <input
               type="date"
-              value={selectedDate}
+              {...register('appointmentDate')}
               min={new Date().toISOString().split('T')[0]}
               onChange={handleDateChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                errors.appointmentDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+              }`}
             />
+            {errors.appointmentDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.appointmentDate.message}</p>
+            )}
           </div>
 
           <div className="mb-6">
@@ -189,7 +248,7 @@ export default function AppointmentPage() {
                 <button
                   key={index}
                   type="button"
-                  onClick={() => slot.available && setSelectedTime(slot.time)}
+                  onClick={() => slot.available && setValue('appointmentTime', slot.time)}
                   disabled={!slot.available}
                   className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors
                     ${selectedTime === slot.time
@@ -203,22 +262,30 @@ export default function AppointmentPage() {
                 </button>
               ))}
             </div>
+            <input type="hidden" {...register('appointmentTime')} />
+            {errors.appointmentTime && (
+              <p className="mt-1 text-sm text-red-600">{errors.appointmentTime.message}</p>
+            )}
           </div>
-
+            <div>
+              <input type="hidden" {...register('doctorId')} value="IP5k3oM6YRUs0yCzmTIBQMAg0Um1" />
+              <input type="hidden" {...register('patientId')} value={user?.uid} />
+            </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
             <div className="w-full sm:w-auto">
               {selectedTime && (
                 <div className="text-sm text-gray-700 bg-blue-50 p-3 rounded-md">
                   <p className="font-semibold">Selected Appointment:</p>
                   <p>{selectedDate} at {selectedTime}</p>
-                  <p>Visit Type: {visitType || 'Not selected'}</p>
-                  <p>Reason: {reasonForVisit || 'Not selected'}</p>
+                  <p>Visit Type: {watch('visitType') || 'Not selected'}</p>
+                  <p>Reason: {watch('reasonForVisit') || 'Not selected'}</p>
                 </div>
               )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <button
+                type="button"
                 onClick={handleClearAll}
                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
               >
@@ -226,10 +293,10 @@ export default function AppointmentPage() {
               </button>
               
               <button
-                onClick={handleConfirmAppointment}
-                disabled={!isFormComplete() || isSubmitting}
+                type="submit"
+                disabled={!isValid || isSubmitting}
                 className={`px-4 py-2 rounded-md transition-colors
-                  ${isFormComplete() 
+                  ${isValid 
                     ? 'bg-green-600 text-white hover:bg-green-700' 
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                   } flex items-center justify-center`}
@@ -246,7 +313,7 @@ export default function AppointmentPage() {
               </button>
             </div>
           </div>
-        </>
+        </form>
       )}
     </div>
   );

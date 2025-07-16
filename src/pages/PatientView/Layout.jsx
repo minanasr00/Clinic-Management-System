@@ -9,7 +9,7 @@ import { AuthContext } from '../../context/Authcontext';
 
 export default function Layout() {
   const [activeNav, setActiveNav] = useState()
-  const { setLoading } = useContext(AuthContext)
+  const { setLoading ,user} = useContext(AuthContext)
     const navItems = ['Home', 'Medical history']
   const ref = useRef(null)
   const navigate = useNavigate()
@@ -60,13 +60,14 @@ export default function Layout() {
                     </div>
                    
                     <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-400 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">JD</span>
+                    <span className="text-white text-sm font-lg">{(user?.displayName?.charAt(0).toUpperCase())}{user?.displayName?.charAt(1)}</span>
                   </div>
                   </nav>
             </div>
-             <div ref={ref} className='sm:hidden md:hidden border border-t-0 border-gray-100'>
-                         {navItems.map((item) => (
-                      <button
+             <div ref={ref} className='sm:hidden md:hidden flex flex-col text-center gap-1 items-center space-x-1 border border-t-0 border-gray-100'>
+                        {navItems.map((item) => (
+                      <Link
+                        to={item}
                         key={item}
                         onClick={() => setActiveNav(item)}
                         className={`text-md cursor-pointer w-full font-medium transition-colors ${
@@ -76,8 +77,18 @@ export default function Layout() {
                         }`}
                       >
                         {item}
-                      </button>
-                    ))}
+                      </Link>
+                        ))}
+                    <Link onClick={()=>{setActiveNav("Book Appointment")}} to={"Book Appointment"} className={`${activeNav == "Book Appointment" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
+                      Book Appointment
+                    </Link>
+              <button onClick={() => {
+                setLoading(true)
+                handleSignOut()
+                navigate("/")
+              }} className='bg-red-700 text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
+                      sign Out
+                    </button>
                     </div>
               </header>
         <Outlet></Outlet>

@@ -13,7 +13,7 @@ export default function Home() {
   },
   {
     icon: 'Heart',
-    title: "Cardiology",
+    title: "Cardiology",  
   },
   {
     icon: 'Pill',
