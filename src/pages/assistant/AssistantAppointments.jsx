@@ -1,21 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   addAppointmentToFirestore,
   getAllAppointmentsForTable,
   updateAppointmentInFirestore,
   deleteAppointmentFromFirestore,
-} from "../../services/firebase/assistantServices";
+} from "../../services/firebase/appointmentsServices";
 import Sidebar from "../../components/Sidebar";
 import CustomCalendar from "./CustomCalendar";
+import { AuthContext } from "../../context/Authcontext";
 
 const TIME_SLOTS = [
-  "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
-  "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM",
-  "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"
+  "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM",
+  "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM",
+  "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM",
+  "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM",
+  "11:00 PM", "11:30 PM"
 ];
 
 export default function AssistantAppointments() {
+  const { user } = useContext(AuthContext);
   const [appointments, setAppointments] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
@@ -27,23 +31,16 @@ export default function AssistantAppointments() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-
   const [successMessage, setSuccessMessage] = useState("");
-  // Removed unused deleteId state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [assistantId, setAssistantId] = useState(null);
 
-
-const confirmDelete = (id) => {
-  setDeleteId(id);
-  setShowDeleteModal(true);
-};
-const handleConfirmDelete = async () => {
-  await deleteAppointmentFromFirestore(deleteId);
-  fetchAppointments();
-  setShowDeleteModal(false);
-};
-
+  useEffect(() => {
+    if (user) {
+      setAssistantId(user.uid);
+    }
+  }, [user]);
 
   const fetchAppointments = async () => {
     const data = await getAllAppointmentsForTable();
@@ -67,7 +64,7 @@ const handleConfirmDelete = async () => {
   };
 
   const handleSubmit = async () => {
-    if (!patientId || !selectedDate || !selectedTime) {
+    if (!patientId || !selectedDate || !selectedTime || !assistantId) {
       return alert("Please fill all fields");
     }
     if (!paymentAmount || !paymentMethod) {
@@ -75,19 +72,17 @@ const handleConfirmDelete = async () => {
     }
 
     const appointment = {
-  assistant: "vt3B7DRJcOOpABgox3OZL7tlGeI2",
-  doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
-  patient_id: patientId,
-  
-  payment_amount: Number(paymentAmount),
-  payment_method: paymentMethod,
-  payment_status: "pending",
-  reason_for_visit: reason,
-  start_time: new Date(`${selectedDate} ${selectedTime}`),
-  status,
-  booked_by: "assistant", // ✅ NEW
-};
-
+      assistant: assistantId,
+      doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
+      patient_id: patientId,
+      payment_amount: Number(paymentAmount),
+      payment_method: paymentMethod,
+      payment_status: "pending",
+      reason_for_visit: reason,
+      start_time: new Date(`${selectedDate} ${selectedTime}`),
+      status,
+      booked_by: "assistant",
+    };
 
     if (editId) {
       await updateAppointmentInFirestore(editId, appointment);
@@ -100,57 +95,63 @@ const handleConfirmDelete = async () => {
     fetchAppointments();
     resetForm();
     setShowForm(false);
-
     setTimeout(() => setSuccessMessage(""), 3000);
   };
-// يحوّل Date إلى تنسيق مثل "03:00 PM"
-const toTimeSlotFormat = (dateObj) => {
-  const hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const normalizedHours = hours % 12 === 0 ? 12 : hours % 12;
-  return `${normalizedHours.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")} ${ampm}`;
-};
 
+  const toTimeSlotFormat = (dateObj) => {
+    const hours = dateObj.getHours();
+    const minutes = dateObj.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const normalizedHours = hours % 12 === 0 ? 12 : hours % 12;
+    return `${normalizedHours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${ampm}`;
+  };
 
   const handleEdit = (appt) => {
-  setEditId(appt.id);
-  setPatientId(appt.patient_id);
-  const dateObj = new Date(appt.start_time.seconds * 1000);
-  setSelectedDate(dateObj.toISOString().split("T")[0]);
-  setSelectedTime(toTimeSlotFormat(dateObj)); // ✅ الجديد
-  setStatus(appt.status);
-  setReason(appt.reason_for_visit || "");
-  setPaymentAmount(appt.payment_amount || "");
-  setPaymentMethod(appt.payment_method || "cash");
-  setShowForm(true);
-};
- ;
- const getFormattedTime = (slot) => {
+    setEditId(appt.id);
+    setPatientId(appt.patient_id);
+    const dateObj = new Date(appt.start_time.seconds * 1000);
+    setSelectedDate(dateObj.toISOString().split("T")[0]);
+    setSelectedTime(toTimeSlotFormat(dateObj));
+    setStatus(appt.status);
+    setReason(appt.reason_for_visit || "");
+    setPaymentAmount(appt.payment_amount || "");
+    setPaymentMethod(appt.payment_method || "cash");
+    setShowForm(true);
+  };
+
+  const confirmDelete = (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    await deleteAppointmentFromFirestore(deleteId);
+    fetchAppointments();
+    setShowDeleteModal(false);
+  };
+
+  const getFormattedTime = (slot) => {
     const [hourStr, modifier] = slot.split(" ");
     let [hours, minutes] = hourStr.split(":").map(Number);
-
     if (modifier === "PM" && hours !== 12) hours += 12;
     if (modifier === "AM" && hours === 12) hours = 0;
-
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
   const bookedTimes = appointments
-  .filter((a) => {
-    const apptDate = new Date(a.start_time.seconds * 1000);
-    return apptDate.toISOString().split("T")[0] === selectedDate;
-  })
-  .map((a) => {
-    const date = new Date(a.start_time.seconds * 1000);
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}`;
-  });
+    .filter((a) => {
+      const apptDate = new Date(a.start_time.seconds * 1000);
+      return apptDate.toISOString().split("T")[0] === selectedDate;
+    })
+    .map((a) => {
+      const date = new Date(a.start_time.seconds * 1000);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    });
+
 
   return (
     <div className="min-h-screen bg-white pt-16 pl-64 pr-4 mt-0">
