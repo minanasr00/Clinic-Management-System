@@ -1,4 +1,3 @@
-// src/pages/assistant/Patients.jsx
 
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
@@ -47,7 +46,8 @@ export default function Patients() {
   ];
 
   const filteredPatients = patients.filter((p) =>
-    p.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.id?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -67,34 +67,38 @@ export default function Patients() {
           </p>
           <input
             type="text"
-            placeholder=" Search..."
+            placeholder=" Search by name or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
           />
 
           <div className="space-y-4">
-            {filteredPatients.map((patient, index) => (
-              <div
-                key={patient.id}
-                className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                onClick={() => {
-                  setSelectedPatient(patient);
-                  setActiveTab("history");
-                  setUploadedFiles([]);
-                }}
-              >
-                <img
-                  src={DEFAULT_IMAGES[index % DEFAULT_IMAGES.length]}
-                  alt={patient.name}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div>
-                  <p className="font-semibold">{patient.name}</p>
-                  <p className="text-sm text-sky-700">ID: {patient.id}</p>
+            {filteredPatients.length > 0 ? (
+              filteredPatients.map((patient, index) => (
+                <div
+                  key={patient.id}
+                  className="flex items-center gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                  onClick={() => {
+                    setSelectedPatient(patient);
+                    setActiveTab("history");
+                    setUploadedFiles([]);
+                  }}
+                >
+                  <img
+                    src={DEFAULT_IMAGES[index % DEFAULT_IMAGES.length]}
+                    alt={patient.name}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <p className="font-semibold">{patient.name}</p>
+                    <p className="text-sm text-sky-700">ID: {patient.id}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm italic">No patient found with this name or ID.</p>
+            )}
           </div>
         </div>
 
@@ -155,8 +159,7 @@ export default function Patients() {
                     <span className="font-medium">Gender:</span> {selectedPatient.gender}
                   </p>
                   <p>
-                    <span className="font-medium">Date of Birth:</span>{" "}
-                    {selectedPatient.dob}
+                    <span className="font-medium">Date of Birth:</span> {selectedPatient.dob}
                   </p>
                 </div>
               )}
@@ -229,5 +232,3 @@ export default function Patients() {
     </>
   );
 }
-
-

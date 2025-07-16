@@ -31,12 +31,10 @@ export const getCompletedPatientsCount = async () => {
   return snapshot.size;
 };
 
-// ✅ دالة جديدة لحل الخطأ - جلب المواعيد القادمة (scheduled / pending / delayed)
 export const getUpcomingAppointments = async () => {
   const q = query(
     collection(db, "appointments"),
     where("status", "in", ["scheduled", "pending", "delayed"]),
-    // orderBy("start_time", "asc")
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({
@@ -45,12 +43,10 @@ export const getUpcomingAppointments = async () => {
   }));
 };
 
-// ✅ جلب المواعيد المكتملة
 export const getCompletedAppointments = async () => {
   const q = query(
     collection(db, "appointments"),
     where("status", "==", "completed"),
-    // orderBy("start_time", "asc")
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({
@@ -59,10 +55,8 @@ export const getCompletedAppointments = async () => {
   }));
 };
 
-// ✅ جلب كل المواعيد
 export const getAllAppointmentsForTable = async () => {
   const q = query(collection(db, "appointments"), 
-  // orderBy("start_time", "asc")
 );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({
@@ -71,7 +65,6 @@ export const getAllAppointmentsForTable = async () => {
   }));
 };
 
-// ✅ جلب المواعيد القادمة فقط (scheduled فقط)
 export const fetchUpcomingAppointments = async () => {
   const q = query(
     collection(db, "appointments"),
@@ -85,7 +78,6 @@ export const fetchUpcomingAppointments = async () => {
   }));
 };
 
-// ✅ إضافة ميعاد
 export const addAppointmentToFirestore = async (data) => {
   const docRef = await addDoc(collection(db, "appointments"), {
     ...data,
@@ -94,12 +86,10 @@ export const addAppointmentToFirestore = async (data) => {
   return docRef.id;
 };
 
-// ✅ حذف ميعاد
 export const deleteAppointmentFromFirestore = async (id) => {
   await deleteDoc(doc(db, "appointments", id));
 };
 
-// ✅ تعديل ميعاد
 export const updateAppointmentInFirestore = async (id, updatedData) => {
   await updateDoc(doc(db, "appointments", id), updatedData);
 };

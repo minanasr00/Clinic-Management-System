@@ -8,6 +8,7 @@ import { FirebaseError } from "firebase/app";
 import {  useContext, useState } from "react";
 import { AuthContext } from "../../context/Authcontext";
 import img from '../../assets/1.jpg'
+import toast from "react-hot-toast";
 
 
 export default function Login() {
@@ -16,7 +17,7 @@ export default function Login() {
     const navigate = useNavigate()
     const loginSchema = z.object({
         email: z.string().email("email invalid").min(1, 'email is required'),
-        password: z.string().min(1,"password.required")
+        password: z.string().min(1,"password required")
     })
 
     const { register, handleSubmit, formState: { errors } } = useForm({
@@ -28,19 +29,57 @@ export default function Login() {
         try {
             setSubmitMessage(null)
             await signIn(data.email, data.password)
+            toast.success("User logged in successfully", {
+                position: "top-right",
+                close: 3000
+            })
             if (loading && !role) {
                 setSubmitMessage("Loading...")
             } else if( role === "patient" || role === "doctor" || role === "admin") {
-                setSubmitMessage("Login Successfully")
                 navigate(`/${role}`)
             }
         } catch (error) {
             console.log(error);
             if (error instanceof FirebaseError) {
-                setSubmitMessage(error.message)
+                setSubmitMessage(getFriendlyError(error.code))
             }
         }
     }
+    function getFriendlyError(code) {
+  switch(code) {
+    // Email/password login errors
+    case 'auth/invalid-email':
+      return "Please enter a valid email address";
+    case 'auth/user-not-found':
+      return "No account found with this email";
+    case 'auth/wrong-password':
+      return "Incorrect password";
+    case 'auth/invalid-credential':
+      return "Invalid login credentials";
+
+    // Account status errors
+    case 'auth/user-disabled':
+      return "This account has been disabled";
+    case 'auth/too-many-requests':
+      return "Too many attempts. Try again later";
+
+    // Network/technical errors
+    case 'auth/network-request-failed':
+      return "Network error. Check your connection";
+    case 'auth/internal-error':
+      return "Server error. Please try again";
+
+    // Social login errors
+    case 'auth/popup-closed-by-user':
+      return "Login window was closed";
+    case 'auth/cancelled-popup-request':
+      return "Login cancelled";
+
+    // General fallback
+    default:
+      return "Login failed. Please try again";
+  }
+}
     const handleGoogleSub = async () => {
         try {
             await signinWithGoogle()
