@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
-import { fetchAllPatients } from "../../services/firebase/patientsServices";
+import { fetchAllPatients } from "../../services/firebase/AssistantpatientsServices";
 import {
   MdAssignmentInd,
   MdEventNote,
