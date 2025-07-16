@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router";
 import { fetchPatientsWithRole } from "../../services/firebase/patientServiceDoctor";
+import { fetchAppointments } from "../../services/firebase/appointmentsServiceDoctor";
 import { handleSignOut } from "../../services/firebase/auth";
 import AdminSideNav from "./AdminSideNav";
 
@@ -16,7 +17,9 @@ const DoctorDashboard = () => {
   const [activeItem, setActiveItem] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
+  const [assistants, setAssistants] = useState([]);
   const [showPatientSlider, setShowPatientSlider] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +35,23 @@ const DoctorDashboard = () => {
     };
     getPatients();
   }, []);
+
+  useEffect(() => {
+    const getAssistants = async () => {
+      const data = await fetchPatientsWithRole("assistant");
+      setAssistants(data);
+    };
+    getAssistants();
+  }, []);
+
+  useEffect(() => {
+    const getAppointments = async () => {
+      const data = await fetchAppointments();
+      setAppointments(data);
+    };
+    getAppointments();
+  }, []);
+
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
@@ -79,13 +99,33 @@ const DoctorDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {[1, 2, 3, 4].map((_, i) => (
-                    <tr key={i} className="border-t">
-                      <td className="p-3">John Smith</td>
-                      <td className="p-3">2025-07-1{i}</td>
-                      <td className="p-3">10:00 AM</td>
-                      <td className="p-3">Checkup</td>
-                      <td className="p-3 text-green-600">Confirmed</td>
+                  {appointments.map((appt, i) => (
+                    <tr key={appt.id || i} className="border-t capitalize">
+                      <td className="p-3">{appt.patientName || "N/A"}</td>
+                      <td className="p-3">
+                        {appt.start_time?.toDate
+                          ? appt.start_time.toDate().toLocaleDateString()
+                          : "N/A"}
+                      </td>
+                      <td className="p-3">
+                        {appt.start_time?.toDate
+                          ? appt.start_time.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : "N/A"}
+                      </td>
+                      <td className="p-3">{appt.reason_for_visit || "General"}</td>
+                      <td
+                        className={`p-3 font-semibold ${appt.status?.toLowerCase() === "completed"
+                            ? "text-green-600"
+                            : appt.status?.toLowerCase() === "cancelled"
+                              ? "text-red-600"
+                              : appt.status?.toLowerCase() === "delayed"
+                                ? "text-yellow-600"
+                                : "text-gray-800"
+                          }`}
+                      >
+                        {appt.status || "Pending"}
+                      </td>
+
                     </tr>
                   ))}
                 </tbody>
@@ -149,16 +189,13 @@ const DoctorDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t">
-                    <td className="p-3">Alice Johnson</td>
-                    <td className="p-3">alice@example.com</td>
-                    <td className="p-3 text-green-600">Active</td>
-                  </tr>
-                  <tr className="border-t">
-                    <td className="p-3">James Franco</td>
-                    <td className="p-3">james@example.com</td>
-                    <td className="p-3 text-red-600">Inactive</td>
-                  </tr>
+                  {assistants.map((assistant, idx) => (
+                    <tr key={idx} className="border-t">
+                      <td className="p-3 capitalize">{assistant.name || "Unnamed"}</td>
+                      <td className="p-3">{assistant.email || "No email"}</td>
+                      <td className="p-3 text-green-600">Active</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
