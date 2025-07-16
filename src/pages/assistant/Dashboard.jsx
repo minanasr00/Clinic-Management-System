@@ -9,7 +9,7 @@ import {
   getUpcomingAppointments,
   getCompletedPatientsCount,
 } from "../../services/firebase/appointmentsServices";
-import { getPatientsCount } from "../../services/firebase/patientsServices";
+import { getPatientsCount } from "../../services/firebase/AssistantpatientsServices";
 
 const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState("");
