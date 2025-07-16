@@ -25,12 +25,12 @@ export default function AdminNav() {
                                 handleSignOut()
                                 navigate("/")
                               }} className='bg-red-700 text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
-                                      sign Out
+                                      Sign Out
                                     </button>
               </nav>
   
               <div className="flex items-center space-x-4">
-                <LuBell className="w-6 h-6 text-gray-400" />
+                <LuBell className="w-6 h-6 text-gray-400 cursor-pointer" />
                 <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">A</span>
                 </div>

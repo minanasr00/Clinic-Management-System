@@ -1,72 +1,81 @@
-import {createBrowserRouter, Navigate, RouterProvider } from 'react-router'
-import '../src/App.css'
-import Login from './pages/LoginPage/Login'
-import Register from './pages/RegisterPage/Register'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'; // Updated to 'react-router-dom' if you're using it
+import '../src/App.css';
 
-import AuthProvider from './context/Authcontext';
- import {QueryClient,
-  QueryClientProvider,
-} from '@tanstack/react-query'
-import PageNotFound from './pages/PageNotFound/PageNotFound'
-import Home from './pages/PatientView/Home/Home';
-import Layout from './pages/PatientView/Layout';
-import MedicalHistory from './pages/PatientView/MedicalHistory/MedicalHistory';
-import Payment from './pages/PatientView/Payment/Payment';
-import BookAppointment from './pages/PatientView/BookAppointment/BookAppointment';
-import Authgaurd from './components/Authgaurd';
-import LogRegGaurd from './components/logRegGaurd';
-import DoctorDashboard from './pages/Doctor/DoctorDashboard';
-import AppointmentsPage from './pages/Doctor/Appointments';
+// ===== Doctor Pages =====
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import AddAssistantPage from './pages/Doctor/AddNewAssistant';
 import PatientState from './pages/Doctor/PatientState';
-import Dashboard from './pages/assistant/Dashboard';
-import AssistantAppointments from './pages/assistant/AssistantAppointments';
-import AssistantLayout from './pages/assistant/AssistantLayout';
-import Patients from './pages/assistant/Patients';
-import Messages from './pages/assistant/AssistantChat';
+
+// Optional: only keep if you're using TanStack Query
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+
+// Optional: auth provider only if needed now
+// import AuthProvider from './context/Authcontext';
+
+// ===== Optional Fallback Page =====
+// import PageNotFound from './pages/PageNotFound/PageNotFound'
+
+// ======= Minimal Route Setup (Doctor Only) =======
 
 const routes = [
-  {
-    path: "/patient", element: <Authgaurd allowedRoles={["patient"]}><Layout></Layout></Authgaurd>, children: [
-      { index: true, element: <Navigate to="/patient/Home" replace /> },
-      { path: "/patient/Home", element: <Home></Home> },
-      { path: "Medical history", element: <MedicalHistory></MedicalHistory> },
-      { path: "Book Appointment", element: <BookAppointment></BookAppointment> },
-      { path: "payment", element: <Payment></Payment> },
-    ]
-  },
-  {
-    path: "/doctor", element: <Authgaurd allowedRoles={["doctor"]}><DoctorDashboard /></Authgaurd>, children: [
-      { path: "/doctor/Dashboard", element: <DoctorDashboard></DoctorDashboard> },
-      // { path: "/Appointments", element: <AppointmentsPage></AppointmentsPage> },
-      { path: "AddAssistant", element: <AddAssistantPage></AddAssistantPage> },
-      { path: 'PatientState', element: <PatientState></PatientState> }
-    ]
-  },
-  {
-    path: "/assistant", element: <Authgaurd allowedRoles={["assistant"]}><AssistantLayout/></Authgaurd>, children: [
-      { index : true, element: <Navigate to="/assistant/dashboard" replace/> },
-      { path: "/assistant/dashboard", element: <Dashboard /> },
-      { path: "/assistant/appointments", element: <AssistantAppointments/> },
-      { path: "/assistant/patients", element: <Patients/> },
-      { path: "/assistant/Messages", element: <Messages/> }
-    ]
-  },
-  { path: "/", element:<LogRegGaurd><Login></Login></LogRegGaurd>  },
-  { path: "/register", element:<LogRegGaurd><Register></Register> </LogRegGaurd> },
-  {path : '*' ,element:<PageNotFound></PageNotFound>}
-] 
-const router = createBrowserRouter(routes)
-const queryClient = new QueryClient()
-function App() {
+  // ✅ Direct access to the Doctor Dashboard
+  { path: "/doctor/dashboard", element: <DoctorDashboard /> },
 
-  return <>
-    <AuthProvider>
-    <QueryClientProvider client={queryClient}>
-    <RouterProvider router={router}/> 
-    </QueryClientProvider>
-    </AuthProvider>
+  // ✅ Optional: Uncomment if you want to test other doctor pages
+  { path: "/doctor/add-assistant", element: <AddAssistantPage /> },
+  { path: "/doctor/PatientState", element: <PatientState /> },
+
+  // ❌ Commented out everything else for now
+  // {
+  //   path: "/patient", element: (
+  //     <Authgaurd allowedRoles={["patient"]}>
+  //       <Layout />
+  //     </Authgaurd>
+  //   ), children: [
+  //     { index: true, element: <Navigate to="/patient/Home" replace /> },
+  //     { path: "/patient/Home", element: <Home /> },
+  //     { path: "Medical history", element: <MedicalHistory /> },
+  //     { path: "Book Appointment", element: <BookAppointment /> },
+  //     { path: "payment", element: <Payment /> },
+  //   ]
+  // },
+
+  // {
+  //   path: "/assistant", element: (
+  //     <Authgaurd allowedRoles={["assistant"]}>
+  //       <AssistantLayout />
+  //     </Authgaurd>
+  //   ), children: [
+  //     { index: true, element: <Navigate to="/assistant/dashboard" replace /> },
+  //     { path: "/assistant/dashboard", element: <Dashboard /> },
+  //     { path: "/assistant/appointments", element: <AssistantAppointments /> },
+  //     { path: "/assistant/patients", element: <Patients /> },
+  //     { path: "/assistant/Messages", element: <Messages /> }
+  //   ]
+  // },
+
+  // { path: "/", element: <LogRegGaurd><Login /></LogRegGaurd> },
+  // { path: "/register", element: <LogRegGaurd><Register /></LogRegGaurd> },
+  // { path: '*', element: <PageNotFound /> }
+];
+
+const router = createBrowserRouter(routes);
+const queryClient = new QueryClient();
+
+function App() {
+  return (
+    <>
+      {/* Optional: Remove <AuthProvider> for now if not using */}
+      {/* <AuthProvider> */}
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      {/* </AuthProvider> */}
     </>
+  );
 }
 
-export default App
+export default App;
