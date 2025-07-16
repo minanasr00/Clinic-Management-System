@@ -1,14 +1,14 @@
-import { Link, useNavigate } from "react-router";
-import { useForm,} from "react-hook-form"
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import {signUp } from "../../services/firebase/auth";
+import { signUp } from "../../services/firebase/auth";
 import { useState } from "react";
 import { FirebaseError } from 'firebase/app';
 import img from '../../assets/1.jpg'
 import toast from "react-hot-toast";
 
-
+ 
 export default function Register() {
     const [submitMessage, setSubmitMessage] = useState(null)
     const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function Register() {
       const regex = /^\d{2}-\d{2}-\d{4}$/;
       return regex.test(val);
     }, {
-      message: "Invalid date format. Use DD-MM-YYYY"
+        message: "Invalid date format. Use DD-MM-YYYY"
         }),
         gender: z.enum(["male", "female"], {
     required_error: "Gender selection is required",
@@ -50,43 +50,46 @@ export default function Register() {
         mode: "onChange"
     })
 
-    const onSubmit = async (data) => {
-        try {
-            setSubmitMessage(null)
-            const res = await signUp(data.email, data.password, data)
-           toast.success("Signup Successfully", {
+const onSubmit = async (data) => {
+    try {
+        setSubmitMessage(null)
+        const res = await signUp(data.email, data.password, data)
+        toast.success("Signup Successfully", {
+            position: "top-center",
+        })
+        console.log(res);
+        navigate("/")
+    } catch (error) {
+        if (error instanceof FirebaseError) {
+            setSubmitMessage(getFriendlyError(error.code));
+            toast.error(getFriendlyError(error.code), {
                 position: "top-center",
-            })
-            console.log(res);
-            navigate("/")
-        } catch (error) {
-            if (error instanceof FirebaseError) {
-                setSubmitMessage(getFriendlyError(error.code));
-                toast.error(getFriendlyError(error.code), {
-                    position: "top-center",
-                    close: 3000
-                });
-            }
+                duration: 3000
+            });
         }
     }
-    function getFriendlyError(code) {
-  switch(code) {
-    case 'auth/email-already-in-use':
-      return "Email already exists";
-    case 'auth/weak-password':
-      return "Password should be at least 6 characters";
-    case 'auth/invalid-email':
-      return "Invalid email address";
-    default:
-      return "Signup failed. Please try again";
-  }
 }
-    return <>
-        <div style={{backgroundImage:`url(${img})`}} className={` w-full min-h-screen bg-cover bg-center bg-no-repeat flex  justify-center items-center`}>
-        <div className="sm:w-[75%] md:w-[50%] h-[50%] bg-[#000000cc] text-white flex flex-col items-center p-5">
+
+function getFriendlyError(code) {
+    switch(code) {
+        case 'auth/email-already-in-use':
+            return "Email already exists";
+        case 'auth/weak-password':
+            return "Password should be at least 6 characters";
+        case 'auth/invalid-email':
+            return "Invalid email address";
+        default:
+            return "Signup failed. Please try again";
+    }
+}
+    return (
+        <>
+            <div style={{backgroundImage:`url(${img})`}} className={` w-full min-h-screen bg-cover bg-center bg-no-repeat flex  justify-center items-center`}>
+                <div className="sm:w-[75%] md:w-[50%] h-[50%] bg-[#000000cc] text-white flex flex-col items-center p-5">
+                    <div className="sm:w-[75%] md:w-[50%] h-[50%] bg-[#000000cc] text-white flex flex-col items-center p-5">
                         <div className="text-[2rem]"> Sign Up</div>
                         <div className="md:w-[75%] sm:w-[100%]">
-                                <form onSubmit={handleSubmit(onSubmit)} className=" mx-auto">
+                            <form onSubmit={handleSubmit(onSubmit)} className=" mx-auto">
                                 <div className="mb-5">
                                     <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
                                     <input type="text" id="name" {...register("name")} className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light" placeholder="Your Name" />
@@ -117,46 +120,40 @@ export default function Register() {
                                     <input type="text" id="dob" {...register("dob")} className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light" />
                                     {errors.dob && <div className="text-red-700">{errors.dob.message}</div> }
                                 </div>
-                        <div className="mb-5">
-                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Gender</label>
-                             <label className="inline-flex items-center">
-                                <input
-                                    type="radio"
-                                    value="male"
-                                    className="h-4 w-4  text-blue-600 focus:ring-blue-500 border-gray-300"
-                                    {...register("gender")}
-                                />
-                                <span className="ml-2 text-white me-5">Male</span>
-                                </label>
-                                
-                            <label className="inline-flex items-center">
-                                <input
-                                    type="radio"
-                                    value="female"
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                    {...register("gender")}
-                                />
-                                <span className="ml-2 text-white">Female</span>
-                                </label>
+                                <div className="mb-5">
+                                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Gender</label>
+                                    <label className="inline-flex items-center">
+                                        <input
+                                            type="radio"
+                                            value="male"
+                                            className="h-4 w-4  text-blue-600 focus:ring-blue-500 border-gray-300"
+                                            {...register("gender")}
+                                        />
+                                        <span className="ml-2 text-white me-5">Male</span>
+                                    </label>
+                                    <label className="inline-flex items-center">
+                                        <input
+                                            type="radio"
+                                            value="female"
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                            {...register("gender")}
+                                        />
+                                        <span className="ml-2 text-white">Female</span>
+                                    </label>
                                     {errors.gender && <div className="text-red-700">{errors.gender.message}</div> }
                                 </div>
                                 <div className="flex items-start mb-5">
-                                    
-                                    </div>
-                                    {submitMessage && <div className="my-3 text-red-700 text-center">{submitMessage}</div>}
+                                </div>
+                                {submitMessage && <div className="my-3 text-red-700 text-center">{submitMessage}</div>}
                                 <button type="submit" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 w-full">Sign Up</button>
                             </form>
                             <div>
-<<<<<<< Updated upstream
-                                Have account? <Link to="/login" className="hover:text-blue-700"> Sign In</Link>
-                            
-                    </div>  
-=======
                                 Have account? <Link to="/" className="hover:text-blue-700"> Sign In</Link>
                             </div>
->>>>>>> Stashed changes
                         </div>
                     </div>
                 </div>
-    </>
+            </div>
+        </>
+    );
 }
