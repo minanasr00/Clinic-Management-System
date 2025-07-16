@@ -20,10 +20,10 @@ export default function AdminSideNav() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const routes = {
-    Dashboard: "/doctor/Dashboard",
+    Dashboard: "/Doctor/Dashboard",
     Appointments: "/AppointmentsPage",
-    Patients: "/doctor/PatientState",
-    Assistants: "/doctor/AddAssistant",
+    Patients: "/Doctor/PatientState",
+    Assistants: "/Doctor/AddAssistant",
     Prescriptions: "/",
   };
 
@@ -117,13 +117,6 @@ export default function AdminSideNav() {
           route={routes.Assistants}
           currentPath={location.pathname}
           onClick={() => navigate(routes.Assistants)}
-        />
-        <SidebarItem
-          icon={<FaFilePrescription />}
-          label="Prescriptions"
-          route={routes.Prescriptions}
-          currentPath={location.pathname}
-          onClick={() => navigate(routes.Prescriptions)}
         />
         <button
           onClick={() => {

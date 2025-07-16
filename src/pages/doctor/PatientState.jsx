@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaBell, FaBars } from "react-icons/fa";
-import AdminSideNav from "../doctor/AdminSideNav";
+import AdminSideNav from "./AdminSideNav";
 import doctorimg from "../../assets/istockphoto-92347250-612x612.jpg";
 import logo from "../../assets/logo.jpg";
 

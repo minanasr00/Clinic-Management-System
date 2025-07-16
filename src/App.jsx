@@ -24,6 +24,7 @@ import AssistantAppointments from './pages/assistant/AssistantAppointments';
 import AssistantLayout from './pages/assistant/AssistantLayout';
 import Patients from './pages/assistant/Patients';
 import Messages from './pages/assistant/AssistantChat';
+import { Toaster } from 'react-hot-toast';
 
 const routes = [
   {
@@ -61,6 +62,7 @@ const queryClient = new QueryClient()
 function App() {
 
   return <>
+    <Toaster></Toaster>
     <AuthProvider>
     <QueryClientProvider client={queryClient}>
     <RouterProvider router={router}/> 

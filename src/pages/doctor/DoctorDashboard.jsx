@@ -118,7 +118,7 @@ const DoctorDashboard = () => {
                   {filteredPatients.map((patient, idx) => (
                     <div
                       key={idx}
-                      onClick={() => navigate("/doctor/PatientState")}
+                      onClick={() => navigate("/Doctor/PatientState")}
                       className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform min-w-[60px]"
                     >
                       <img
