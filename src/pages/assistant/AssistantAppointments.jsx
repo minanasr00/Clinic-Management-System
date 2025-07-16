@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  addAppointmentToFirestore,
+  getAllAppointmentsForTable,
+  updateAppointmentInFirestore,
+  deleteAppointmentFromFirestore,
+} from "../../services/firebase/assistantServices";
 import Sidebar from "../../components/Sidebar";
 import CustomCalendar from "./CustomCalendar";
 
 const TIME_SLOTS = [
-  "08:00 AM","08:30 AM","09:00 AM","09:30 AM","10:00 AM","10:30 AM","11:00 AM","11:30 AM",
-  "12:00 PM","12:30 PM","01:00 PM","01:30 PM","02:00 PM","02:30 PM","03:00 PM","03:30 PM",
-  "04:00 PM","04:30 PM","05:00 PM","05:30 PM","06:00 PM","06:30 PM","07:00 PM","07:30 PM",
-  "08:00 PM","08:30 PM","09:00 PM","09:30 PM","10:00 PM","10:30 PM","11:00 PM","11:30 PM",
-  "12:00 AM","12:30 AM","01:00 AM","01:30 AM","02:00 AM","02:30 AM","03:00 AM","03:30 AM",
-  "04:00 AM","04:30 AM","05:00 AM","05:30 AM","06:00 AM","06:30 AM","07:00 AM","07:30 AM"
+  "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM",
+  "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM",
+  "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"
 ];
 
 export default function AssistantAppointments() {
@@ -16,195 +20,362 @@ export default function AssistantAppointments() {
   const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [patientName, setPatientName] = useState("");
-  const [editIndex, setEditIndex] = useState(null);
-  const [allAppointments, setAllAppointments] = useState([]);
+  const [patientId, setPatientId] = useState("");
+  const [editId, setEditId] = useState(null);
+  const [status, setStatus] = useState("scheduled");
+  const [reason, setReason] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  const patientAppointments = [
-    { name: "Ali Kamal", date: "2025-07-04", time: "10:00 AM", source: "Patient", status: "Pending" },
-    { name: "Sara Hamed", date: "2025-07-05", time: "02:00 PM", source: "Patient", status: "Confirmed" }
-  ];
+  const [successMessage, setSuccessMessage] = useState("");
+  // Removed unused deleteId state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+
+const confirmDelete = (id) => {
+  setDeleteId(id);
+  setShowDeleteModal(true);
+};
+const handleConfirmDelete = async () => {
+  await deleteAppointmentFromFirestore(deleteId);
+  fetchAppointments();
+  setShowDeleteModal(false);
+};
+
+
+  const fetchAppointments = async () => {
+    const data = await getAllAppointmentsForTable();
+    setAppointments(data);
+  };
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("appointments") || "[]");
-    const assistantAppointments = stored.filter(a => a.source === "Assistant");
-    const merged = [...assistantAppointments, ...patientAppointments].sort(
-      (a, b) => new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`)
-    );
-    setAppointments(assistantAppointments);
-    setAllAppointments(merged);
+    fetchAppointments();
   }, []);
 
-  const refreshAllAppointments = (updatedAssistantAppointments) => {
-    const merged = [...updatedAssistantAppointments, ...patientAppointments].sort(
-      (a, b) => new Date(`${a.date} ${a.time}`) - new Date(`${b.date} ${b.time}`)
-    );
-    setAppointments(updatedAssistantAppointments);
-    setAllAppointments(merged);
-    localStorage.setItem("appointments", JSON.stringify(updatedAssistantAppointments));
-  };
-
-  const openFormForEdit = (globalIndex) => {
-    const appt = allAppointments[globalIndex];
-    if (appt.source === "Patient") return alert("Cannot delay a patient-booked appointment.");
-
-    const localIndex = appointments.findIndex(
-      a => a.date === appt.date && a.time === appt.time && a.name === appt.name
-    );
-    setPatientName(appt.name);
-    setSelectedDate(appt.date);
-    setSelectedTime(appt.time);
-    setEditIndex(localIndex);
-    setShowForm(true);
-  };
-
-  const addOrUpdateAppointment = () => {
-    if (!patientName.trim() || !selectedDate || !selectedTime) {
-      return alert("Please enter patient name, select a date and time.");
-    }
-    const newAppt = { name: patientName, date: selectedDate, time: selectedTime, source: "Assistant", status: "Confirmed" };
-    let updated;
-    if (editIndex !== null) {
-      updated = [...appointments];
-      updated[editIndex] = newAppt;
-    } else {
-      updated = [...appointments, newAppt];
-    }
-    setEditIndex(null);
-    setShowForm(false);
-    setPatientName("");
+  const resetForm = () => {
+    setPatientId("");
     setSelectedDate("");
     setSelectedTime("");
-    refreshAllAppointments(updated);
+    setEditId(null);
+    setStatus("scheduled");
+    setReason("");
+    setPaymentAmount("");
+    setPaymentMethod("cash");
+    setShowPaymentModal(false);
   };
 
-  const handleDelete = (globalIndex) => {
-    const apptToDelete = allAppointments[globalIndex];
-
-    if (apptToDelete.source === "Assistant") {
-      const updated = appointments.filter(
-        a => !(a.name === apptToDelete.name && a.date === apptToDelete.date && a.time === apptToDelete.time)
-      );
-      refreshAllAppointments(updated);
-    } else {
-      // delete from static list (for demo only - in real app use backend or localStorage)
-      alert("This is a demo record booked by the patient and cannot be deleted in current setup.");
+  const handleSubmit = async () => {
+    if (!patientId || !selectedDate || !selectedTime) {
+      return alert("Please fill all fields");
     }
+    if (!paymentAmount || !paymentMethod) {
+      return alert("Please enter payment details using the Payment button");
+    }
+
+    const appointment = {
+  assistant: "vt3B7DRJcOOpABgox3OZL7tlGeI2",
+  doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
+  patient_id: patientId,
+  
+  payment_amount: Number(paymentAmount),
+  payment_method: paymentMethod,
+  payment_status: "pending",
+  reason_for_visit: reason,
+  start_time: new Date(`${selectedDate} ${selectedTime}`),
+  status,
+  booked_by: "assistant", // ✅ NEW
+};
+
+
+    if (editId) {
+      await updateAppointmentInFirestore(editId, appointment);
+      setSuccessMessage("Appointment updated successfully!");
+    } else {
+      await addAppointmentToFirestore(appointment);
+      setSuccessMessage("Appointment booked successfully!");
+    }
+
+    fetchAppointments();
+    resetForm();
+    setShowForm(false);
+
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
+// يحوّل Date إلى تنسيق مثل "03:00 PM"
+const toTimeSlotFormat = (dateObj) => {
+  const hours = dateObj.getHours();
+  const minutes = dateObj.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const normalizedHours = hours % 12 === 0 ? 12 : hours % 12;
+  return `${normalizedHours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")} ${ampm}`;
+};
+
+
+  const handleEdit = (appt) => {
+  setEditId(appt.id);
+  setPatientId(appt.patient_id);
+  const dateObj = new Date(appt.start_time.seconds * 1000);
+  setSelectedDate(dateObj.toISOString().split("T")[0]);
+  setSelectedTime(toTimeSlotFormat(dateObj)); // ✅ الجديد
+  setStatus(appt.status);
+  setReason(appt.reason_for_visit || "");
+  setPaymentAmount(appt.payment_amount || "");
+  setPaymentMethod(appt.payment_method || "cash");
+  setShowForm(true);
+};
+ ;
+ const getFormattedTime = (slot) => {
+    const [hourStr, modifier] = slot.split(" ");
+    let [hours, minutes] = hourStr.split(":").map(Number);
+
+    if (modifier === "PM" && hours !== 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+  };
+
+  const bookedTimes = appointments
+  .filter((a) => {
+    const apptDate = new Date(a.start_time.seconds * 1000);
+    return apptDate.toISOString().split("T")[0] === selectedDate;
+  })
+  .map((a) => {
+    const date = new Date(a.start_time.seconds * 1000);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
+  });
 
   return (
-    <div className="min-h-screen bg-white pt-16 pl-64 pr-4 mt-0 ">
+    <div className="min-h-screen bg-white pt-16 pl-64 pr-4 mt-0">
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-800">Medicall</h1>
       </nav>
       <Sidebar />
-      <div className="max-w-6xl mx-auto py-8 ">
-        <div className="flex justify-between items-center  mb-6 ml-5">
-          <h3 className="text-2xl font-semibold text-gray-800">Appointments
-            <br></br>
-            <span className="text-xs text-sky-700">Veiw and manage appointmemts details</span>
+      <div className="max-w-6xl mx-auto py-8">
+        <div className="flex justify-between items-center mb-6 ml-5">
+          <h3 className="text-2xl font-semibold text-gray-800">
+            Appointments Table
+            <br />
+            <span className="text-sm text-sky-700">View and manage appointments</span>
           </h3>
-          
-          
-          <button onClick={() => { setShowForm(!showForm); setEditIndex(null); }} className="bg-sky-700
-        text-white px-6 py-3 rounded-full hover:bg-sky-800">
+          <button
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditId(null);
+            }}
+            className="bg-sky-700 text-white px-6 py-3 rounded-full hover:bg-sky-800"
+          >
             {showForm ? "Close Form" : "+ Make Appointment"}
           </button>
         </div>
+
+        {successMessage && (
+          <div className="ml-5 mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-300 shadow-sm max-w-lg">
+            {successMessage}
+          </div>
+        )}
+
         {showForm && (
           <div className="flex flex-col md:flex-row bg-white shadow rounded-xl overflow-hidden ml-5 mb-10">
-            <div className="p-6 mt-25">
+            <div className="p-6">
               <CustomCalendar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-             
+                <label className="block mt-4 mb-1 font-semibold">Status</label>
+              <select
+                className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="scheduled">Scheduled</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="delayed">Delayed</option>
+              </select>
+              <button
+  onClick={() => setShowPaymentModal(true)}
+  className="mt-4 ml-40 rounded-full px-8 py-4 text-xl bg-sky-700 text-white hover:bg-sky-800"
+>
+  Payment
+</button>
+
+{showPaymentModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50">
+    <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+      {/* Close button */}
+      <button
+        onClick={() => setShowPaymentModal(false)}
+        className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl"
+      >
+        ×
+      </button>
+
+      <h2 className="text-lg font-semibold mb-4 text-center text-sky-700">Payment Details</h2>
+
+      <label className="block font-semibold mb-2">Select Payment Method</label>
+      <select
+        value={paymentMethod}
+        onChange={(e) => setPaymentMethod(e.target.value)}
+        className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
+      >
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="insurance">Insurance</option>
+      </select>
+
+      <label className="block font-semibold mb-2">Amount</label>
+      <input
+        type="number"
+        value={paymentAmount}
+        onChange={(e) => setPaymentAmount(e.target.value)}
+        placeholder="Enter amount"
+        className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
+      />
+
+      <button
+        onClick={() => setShowPaymentModal(false)}
+        className="w-fit  py-2 px-4 bg-sky-700 text-white rounded-full hover:bg-sky-800"
+      >
+        Done
+      </button>
+    </div>
+  </div>
+)}
+
             </div>
+
             <div className="flex-1 p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                {editIndex !== null ? "Edit Appointment" : "Make An Appointment"}
-              </h2>
               <p className="text-sm text-gray-600 mb-6">
                 <strong>Doctor:</strong> Dr. Masia Glura &nbsp;|&nbsp;
                 <strong>Hospital:</strong> Barala Hospital
               </p>
+              <label className="block mb-2 font-semibold">Patient Name</label>
               <input
                 type="text"
-                placeholder="Patient Name"
-                value={patientName}
-                onChange={e => setPatientName(e.target.value)}
-                className="w-full mb-4 p-3 border rounded"
+                placeholder="Enter Patient Full Name"
+                value={patientId}
+                onChange={(e) => setPatientId(e.target.value)}
+                className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
               />
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Appointment Time</h3>
-              <div className="grid grid-cols-4 gap-4 max-h-80 overflow-y-auto">
-                {TIME_SLOTS.map(slot => (
-                  <button
-                    key={slot}
-                    onClick={() => setSelectedTime(slot)}
-                    className={`px-4 py-2 border rounded-full text-sm flex items-center justify-center space-x-2 hover:bg-gray-100 focus:outline-none ${
-                      selectedTime === slot ? "bg-sky-700 text-white" : "bg-white text-gray-800"
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l2 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{slot}</span>
-                  </button>
-                ))}
-              </div>
+
+              <label className="block mb-2 font-semibold">Appointment Time</label>
+              <div className="grid grid-cols-4 gap-2 max-h-64 mb-30">
+      {TIME_SLOTS.map((slot) => {
+        const formatted = getFormattedTime(slot);
+        const isBooked = bookedTimes.includes(formatted);
+        return (
+          <button
+            key={slot}
+            disabled={isBooked}
+            onClick={() => setSelectedTime(slot)}
+            className={`px-3 py-2 rounded-full text-sm border ${
+              selectedTime === slot
+                ? "bg-sky-700 text-white"
+                : "bg-white text-gray-700"
+            } ${isBooked ? "opacity-40 cursor-not-allowed " : ""}`}
+          >
+            {slot}
+          </button>
+        );
+      })}
+    </div>
+
+            
               <div className="mt-6 flex justify-between">
-                
-                <button onClick={() => {
-                  setSelectedDate("");
-                  setSelectedTime("");
-                  setPatientName("");
-                  setEditIndex(null);
-                }} className="px-6 py-3 border rounded-full text-sky-700 hover:bg-gray-100">
+                <button onClick={resetForm} className="px-6 py-3 border rounded-full text-sky-700 hover:bg-gray-100">
                   Clear
                 </button>
-                <button onClick={addOrUpdateAppointment} className="px-6 py-3 bg-sky-700 text-white rounded-full hover:bg-sky-800">
-                  {editIndex !== null ? "Update" : "Confirm"}
+                <button onClick={handleSubmit} className="px-6 py-3 bg-sky-700 text-white rounded-full hover:bg-sky-800">
+                  {editId ? "Update" : "Confirm"}
                 </button>
               </div>
             </div>
           </div>
         )}
+
         <div className="bg-white shadow rounded-xl overflow-x-auto ml-5">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booked By</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {allAppointments.map((appt, idx) => (
-                <tr key={idx}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{appt.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-sky-700">{appt.source === "Assistant" ? "Routine Check-up" : "Initial Consultation"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{appt.date}, {appt.time}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${appt.status === "Confirmed" ? "bg-blue-100 text-blue-800" : "bg-yellow-100 text-yellow-800"}`}>
-                      {appt.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{appt.source}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                  <button onClick={() => openFormForEdit(idx)} className="text-sky-700 hover:underline">Delay</button>
-                  <span>|</span>
-                  <button onClick={() => handleDelete(idx)} className="text-red-600 hover:underline">Cancel</button>
-                </td>
+  <tr>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient Name</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booked By</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+  </tr>
+</thead>
+<tbody>
+  {appointments.map((appt) => {
+    const dateObj = new Date(appt.start_time.seconds * 1000);
+    const formattedDate = dateObj.toLocaleDateString();
+    const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                </tr>
-              ))}
-            </tbody>
+    return (
+      <tr key={appt.id}>
+        <td className="px-6 py-4 text-sm">{appt.patient_id}</td>
+        <td className="px-6 py-4 text-sm  text-sky-600">{formattedDate}</td>
+        <td className="px-6 py-4 text-sm text-sky-600">{formattedTime}</td>
+        <td className="px-6 py-4 text-sm">
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold
+            ${appt.status === "completed" ? "bg-green-100 text-green-800"
+              : appt.status === "scheduled" ? "bg-blue-100 text-blue-800"
+              : appt.status === "cancelled" ? "bg-red-100 text-red-800"
+              : appt.status === "delayed" ? "bg-yellow-100 text-yellow-800"
+              : "bg-gray-100 text-gray-800"}`}>
+            {appt.status}
+          </span>
+        </td>
+        <td className="px-6 py-4 text-sm capitalize">
+          {appt.booked_by === "assistant" ? "Assistant" : "Patient"}
+        </td>
+        <td className="px-6 py-4 text-sm space-x-2">
+          <button onClick={() => handleEdit(appt)} className="text-blue-600 hover:underline">Edit</button>
+          <button onClick={() => confirmDelete(appt.id)} className="text-red-600 hover:underline">Delete</button>
+
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
           </table>
         </div>
+        {showDeleteModal && (
+  <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 className="text-lg font-semibold mb-4 text-red-600">Delete Appointment</h2>
+      <p className="mb-6 text-gray-700">Are you sure you want to delete this appointment?</p>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={() => setShowDeleteModal(false)}
+          className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleConfirmDelete}
+          className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+        >
+          Yes, Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );
 }
+
+
 
 
 
