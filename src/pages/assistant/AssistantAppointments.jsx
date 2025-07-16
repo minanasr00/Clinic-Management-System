@@ -4,7 +4,7 @@ import {
   getAllAppointmentsForTable,
   updateAppointmentInFirestore,
   deleteAppointmentFromFirestore,
-} from "../../services/firebase/assistantServices";
+} from "../../services/firebase/appointmentsServices";
 import Sidebar from "../../components/Sidebar";
 import CustomCalendar from "./CustomCalendar";
 
