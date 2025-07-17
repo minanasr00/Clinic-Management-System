@@ -47,7 +47,6 @@ export default function Login() {
     }
     function getFriendlyError(code) {
   switch(code) {
-    // Email/password login errors
     case 'auth/invalid-email':
       return "Please enter a valid email address";
     case 'auth/user-not-found':
@@ -57,25 +56,21 @@ export default function Login() {
     case 'auth/invalid-credential':
       return "Invalid login credentials";
 
-    // Account status errors
     case 'auth/user-disabled':
       return "This account has been disabled";
     case 'auth/too-many-requests':
       return "Too many attempts. Try again later";
 
-    // Network/technical errors
     case 'auth/network-request-failed':
       return "Network error. Check your connection";
     case 'auth/internal-error':
       return "Server error. Please try again";
 
-    // Social login errors
     case 'auth/popup-closed-by-user':
       return "Login window was closed";
     case 'auth/cancelled-popup-request':
       return "Login cancelled";
 
-    // General fallback
     default:
       return "Login failed. Please try again";
   }

@@ -1,10 +1,11 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { getScheduledAppointments } from '../../../services/firebase/patientServices';
+import { addAppointment, getScheduledAppointments } from '../../../services/firebase/patientServices';
 import { AuthContext } from '../../../context/Authcontext';
-import { useQuery} from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+
 
 const appointmentSchema = z.object({
   visitType: z.string().min(1, "Visit type is required"),
@@ -12,7 +13,11 @@ const appointmentSchema = z.object({
   appointmentDate: z.string().min(1, "Date is required"),
   appointmentTime: z.string().min(1, "Time is required"),
   doctorId: z.string(), 
-  patientId: z.string()
+  patientId: z.string(),
+  status: z.string().default("pending"), 
+  paymentMethod: z.string(),
+  bookedBy: z.string().default("patient"),
+  paymentAmount: z.number().default(500)
 });
 
 const visitTypes = [
@@ -34,13 +39,17 @@ const visitReasons = [
   "Other"
 ];
 
+
+
+
 export default function AppointmentPage() {
+  const [PaymentStatus, setPaymentStatus] = useState('');
   const [timeSlots, setTimeSlots] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
   const { user } = useContext(AuthContext);
 
-    const { data: scheduledAppointments, isLoading } = useQuery({
+  const { data: scheduledAppointments, isLoading } = useQuery({
     queryKey: ['appointments'],
     queryFn: getScheduledAppointments,
     refetchInterval: 1000, 
@@ -63,25 +72,13 @@ export default function AppointmentPage() {
   const selectedTime = watch('appointmentTime');
 
   useEffect(() => {
-    const fetchScheduledAppointments = async () => {
-      try {
-        const today = new Date();
+    const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
-        setValue('appointmentDate', formattedDate);
-        
-      if (!isLoading && scheduledAppointments) {
-    console.log("Appointments data:", scheduledAppointments);
-    generateTimeSlots(formattedDate, scheduledAppointments);
-  }
+    setValue('appointmentDate', formattedDate);
+  }, [setValue]);
 
-      } catch (error) {
-        console.error("Failed to fetch appointments:", error);
-      }
-    };
-    fetchScheduledAppointments();
-  }, [setValue, scheduledAppointments, isLoading]);
-
-  const generateTimeSlots = (date , appointments=[]) => {
+  // Memoized time slot generation function
+  const generateTimeSlots = useCallback((date, appointments = []) => {
     const today = new Date();
     const selected = new Date(date);
     const isToday = selected.toDateString() === today.toDateString();
@@ -102,14 +99,15 @@ export default function AppointmentPage() {
         slotTime.setHours(hour, minute);
         
         const isBooked = appointments.some(app => {
-        return (
-          app.getDate() === slotTime.getDate() &&
-          app.getMonth() === slotTime.getMonth() &&
-          app.getFullYear() === slotTime.getFullYear() &&
-          app.getHours() === slotTime.getHours() &&
-          app.getMinutes() === slotTime.getMinutes()
-        );
-      });
+          
+          return (
+            app.getDate() === slotTime.getDate() &&
+            app.getMonth() === slotTime.getMonth() &&
+            app.getFullYear() === slotTime.getFullYear() &&
+            app.getHours() === slotTime.getHours() &&
+            app.getMinutes() === slotTime.getMinutes()
+          );
+        });
 
         const available = !isBooked && (!isToday || slotTime > new Date(today.getTime() + 30*60*1000));
         
@@ -120,20 +118,33 @@ export default function AppointmentPage() {
       }
     }
     
-    setTimeSlots(slots);
-    setValue('appointmentTime', '');
-  };
+    return slots;
+  }, []);
 
-  const handleDateChange = (e) => {
+  // Update time slots when date or appointments change
+  useEffect(() => {
+    if (!isLoading && scheduledAppointments && selectedDate) {
+      const slots = generateTimeSlots(selectedDate, scheduledAppointments);
+      setTimeSlots(slots);
+    }
+  }, [generateTimeSlots, scheduledAppointments, isLoading, selectedDate]);
+
+  // Memoized time selection handler
+  const handleTimeSelect = useCallback((time) => {
+    setValue('appointmentTime', time, { shouldDirty: true, shouldValidate: true });
+  }, [setValue]);
+
+  const handleDateChange = useCallback((e) => {
     const date = e.target.value;
-    setValue('appointmentDate', date);
-    
-    generateTimeSlots(date, scheduledAppointments);
-  };
+    setValue('appointmentDate', date, { shouldValidate: true });
+  }, [setValue]);
 
   const onSubmit = (data) => {
     setIsSubmitting(true);
-    
+    console.log(data);
+    console.log(PaymentStatus);
+    addAppointment(data , PaymentStatus , user?.displayName || "Unknown User")
+
     // Simulate API call/processing
     setTimeout(() => {
       setIsSubmitting(false);
@@ -147,10 +158,10 @@ export default function AppointmentPage() {
     }, 1500);
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     reset();
     setAppointmentConfirmed(false);
-  };
+  }, [reset]);
 
   return (
     <div className="max-w-3xl mt-10 mx-auto p-4 bg-white rounded-lg shadow-md">
@@ -243,34 +254,111 @@ export default function AppointmentPage() {
             <h3 className="block text-sm font-medium text-gray-700 mb-3">
               Select Appointment Time
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {timeSlots.map((slot, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => slot.available && setValue('appointmentTime', slot.time)}
-                  disabled={!slot.available}
-                  className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors
-                    ${selectedTime === slot.time
-                      ? 'bg-blue-600 text-white'
-                      : slot.available
-                        ? 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
-                        : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
-                    }`}
-                >
-                  {slot.time}
-                </button>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="text-center py-4">Loading available time slots...</div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {timeSlots.map((slot, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => slot.available && handleTimeSelect(slot.time)}
+                    disabled={!slot.available}
+                    className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors
+                      ${selectedTime === slot.time
+                        ? 'bg-blue-600 text-white'
+                        : slot.available
+                          ? 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
+                          : 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200'
+                      }`}
+                  >
+                    {slot.time}
+                  </button>
+                ))}
+              </div>
+              )}
             <input type="hidden" {...register('appointmentTime')} />
             {errors.appointmentTime && (
               <p className="mt-1 text-sm text-red-600">{errors.appointmentTime.message}</p>
-            )}
+              )}
+
+<div className="mb-6">
+  <label className="block text-sm font-medium text-gray-700 mt-3 mb-3">
+    Payment Method
+  </label>
+  <div className="flex gap-4">
+    {/* Cash Option */}
+    <label className={`flex-1 text-center py-2 rounded-md cursor-pointer transition-colors ${
+      watch('paymentMethod') === 'cash' 
+        ? 'bg-yellow-500 text-white shadow-md' 
+        : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'
+    }`}>
+      <input
+        type="radio"
+        {...register('paymentMethod')}
+        value="cash"
+        className="hidden"
+        onClick={() => setPaymentStatus('unpaid')}  
+      />
+      <div className="flex items-center justify-center gap-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+        <span>Cash</span>
+      </div>
+    </label>
+
+    {/* Visa Option */}
+    <label className={`flex-1 text-center py-2 rounded-md cursor-pointer transition-colors ${
+      watch('paymentMethod') === 'visa' 
+        ? 'bg-blue-600 text-white shadow-md' 
+        : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'
+    }`}>
+      <input
+        type="radio"
+        {...register('paymentMethod')}
+        value="visa"
+        className="hidden"
+      />
+      <div className="flex items-center justify-center gap-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+          />
+        </svg>
+        <span>Visa</span>
+      </div>
+    </label>
+  </div>
+  {errors.paymentMethod && (
+    <p className="mt-1 text-sm text-red-600">{errors.paymentMethod.message}</p>
+  )}
+</div>
           </div>
-            <div>
-              <input type="hidden" {...register('doctorId')} value="IP5k3oM6YRUs0yCzmTIBQMAg0Um1" />
-              <input type="hidden" {...register('patientId')} value={user?.uid} />
-            </div>
+          <div>
+            <input type="hidden" {...register('doctorId')} value="IP5k3oM6YRUs0yCzmTIBQMAg0Um1" />
+            <input type="hidden" {...register('patientId')} value={user?.uid} />
+          </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
             <div className="w-full sm:w-auto">
               {selectedTime && (

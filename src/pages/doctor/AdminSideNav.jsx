@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { db } from "../../services/firebase/config";
 import { collection, getDocs } from "firebase/firestore";
 import doctorimg from "../../assets/istockphoto-92347250-612x612.jpg";
+import AppointmentsPage from './Appointments';
 
 export default function AdminSideNav() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function AdminSideNav() {
 
   const routes = {
     Dashboard: "/Doctor/Dashboard",
-    Appointments: "/AppointmentsPage",
+    Appointments: "/Doctor/AppointmentsPage",
     Patients: "/Doctor/PatientState",
     Assistants: "/Doctor/AddAssistant",
     Prescriptions: "/",

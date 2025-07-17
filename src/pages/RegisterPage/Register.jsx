@@ -84,8 +84,7 @@ function getFriendlyError(code) {
 }
     return (
         <>
-            <div style={{backgroundImage:`url(${img})`}} className={` w-full min-h-screen bg-cover bg-center bg-no-repeat flex  justify-center items-center`}>
-                <div className="sm:w-[75%] md:w-[50%] h-[50%] bg-[#000000cc] text-white flex flex-col items-center p-5">
+            <div style={{backgroundImage:`url(${img})`}} className={` w-full min-h-screen bg-cover bg-left bg-no-repeat flex  justify-center items-center`}>
                     <div className="sm:w-[75%] md:w-[50%] h-[50%] bg-[#000000cc] text-white flex flex-col items-center p-5">
                         <div className="text-[2rem]"> Sign Up</div>
                         <div className="md:w-[75%] sm:w-[100%]">
@@ -153,7 +152,6 @@ function getFriendlyError(code) {
                         </div>
                     </div>
                 </div>
-            </div>
         </>
     );
 }

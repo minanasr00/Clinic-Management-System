@@ -63,12 +63,12 @@ const DoctorDashboard = () => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar
       <div
         className={`z-50 md:block ${sidebarOpen ? "block fixed bg-white w-64 h-full" : "hidden"}`}
       >
         <AdminSideNav />
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-y-auto">

@@ -25,6 +25,7 @@ import AssistantLayout from './pages/assistant/AssistantLayout';
 import Patients from './pages/assistant/Patients';
 import Messages from './pages/assistant/AssistantChat';
 import { Toaster } from 'react-hot-toast';
+import DoctorLayout from './pages/Doctor/doctorLayout';
 
 const routes = [
   {
@@ -37,9 +38,9 @@ const routes = [
     ]
   },
   {
-    path: "/doctor", element: <Authgaurd allowedRoles={["doctor"]}><DoctorDashboard /></Authgaurd>, children: [
+    path: "/doctor", element: <Authgaurd allowedRoles={["doctor"]}><DoctorLayout /></Authgaurd>, children: [
       { path: "/doctor/Dashboard", element: <DoctorDashboard></DoctorDashboard> },
-      // { path: "/Appointments", element: <AppointmentsPage></AppointmentsPage> },
+      { path: "AppointmentsPage", element: <AppointmentsPage></AppointmentsPage> },
       { path: "AddAssistant", element: <AddAssistantPage></AddAssistantPage> },
       { path: 'PatientState', element: <PatientState></PatientState> }
     ]
