@@ -88,7 +88,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
+      {/* <AdminNav /> */}
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">

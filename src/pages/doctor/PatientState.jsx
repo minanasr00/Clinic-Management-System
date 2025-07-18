@@ -104,14 +104,15 @@ const PatientState = () => {
             onClick={() => setSidebarOpen(false)}
           />
           <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
-            <AdminSideNav />
+            <AdminSideNav /> 
+            {/* <AdminSidebar /> */}
           </div>
         </>
       )}
 
       <div className="flex h-full">
         <div className="hidden md:block">
-          <AdminSideNav />
+          {/* <AdminSideNav /> */}
         </div>
 
         <div className="flex-1 flex flex-col overflow-y-auto bg-[#f7fafc]">

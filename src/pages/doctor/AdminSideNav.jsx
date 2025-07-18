@@ -43,7 +43,7 @@ export default function AdminSideNav() {
   );
 
   return (
-    <aside className="w-64 bg-[#f7fafc] text-black p-4 h-full overflow-y-auto">
+    <aside className="w-64 bg-[#f7fafc] text-black p-4 h-screen overflow-y-auto border-r border-gray-300  shadow-xl">
       {/* Doctor Info */}
       <div className="flex items-center space-x-3 mb-8">
         <img
