@@ -26,6 +26,8 @@ import Patients from './pages/assistant/Patients';
 import Messages from './pages/assistant/AssistantChat';
 import { Toaster } from 'react-hot-toast';
 import DoctorLayout from './pages/Doctor/doctorLayout';
+import PaymentSuccess from './pages/PatientView/PaymentSuccess/PaymentSuccess';
+import { PaymentProvider } from './context/PaymentContext';
 
 
 const routes = [
@@ -37,6 +39,7 @@ const routes = [
       { path: "Book Appointment", element: <BookAppointment></BookAppointment> },
       { path: "patient chat", element: <Messages></Messages> },
       { path: "payment", element: <Payment></Payment> },
+      { path: "payment-success", element: <PaymentSuccess/> }
     ]
   },
   {
@@ -67,9 +70,11 @@ function App() {
   return <>
     <Toaster></Toaster>
     <AuthProvider>
+    <PaymentProvider>
     <QueryClientProvider client={queryClient}>
     <RouterProvider router={router}/> 
     </QueryClientProvider>
+    </PaymentProvider>
     </AuthProvider>
     </>
 }

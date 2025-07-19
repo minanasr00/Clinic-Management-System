@@ -1,62 +1,46 @@
 import { Calendar, FileText, Pill, Stethoscope, Upload, X, FolderPlus, File } from 'lucide-react'
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
+import { getPatientAppointments, getPatientDiagnoses, getTreatmentHistory } from '../../../services/firebase/patientServices';
+import { AuthContext } from './../../../context/Authcontext';
 
 export default function MedicalHistory() {
     const [uploadedFiles, setUploadedFiles] = useState([])
-      const [dragActive, setDragActive] = useState(false)
-  const pastAppointments = [
-    {
-      date: "July 15, 2024",
-      doctor: "Dr. Emily Carter",
-      specialty: "Cardiology",
-      reason: "Routine Checkup",
-      status: "Completed"
-    },
-    {
-      date: "June 20, 2024",
-      doctor: "Dr. Michael Bennett",
-      specialty: "Dermatology",
-      reason: "Skin Rash",
-      status: "Completed"
-    },
-    {
-      date: "May 5, 2024",
-      doctor: "Dr. Olivia Turner",
-      specialty: "General Practice",
-      reason: "Annual Physical",
-      status: "Completed"
+  const [dragActive, setDragActive] = useState(false)
+  const { user } = useContext(AuthContext)
+  const [appointments, setAppointments] = useState([])
+  const [diagnoses, setDiagnoses] = useState([])
+  const [treatments, setTreatments] = useState([])
+  useEffect(() => {
+    async function fetchAppointments() {
+      try {
+        const pappointments = await getPatientAppointments(user.uid);
+        setAppointments(pappointments);
+        console.log("Fetched appointments:", pappointments);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
     }
-  ]
-
-  const diagnoses = [
-    {
-      condition: "Hypertension",
-      description: "Diagnosed in 2020, managed with medication."
-    },
-    {
-      condition: "Allergies",
-      description: "Seasonal allergies to pollen and dust."
-    },
-    {
-      condition: "Asthma",
-      description: "Mild asthma, controlled with inhaler."
+    async function fetchDiagnoses() {
+      try {
+        const pdiagnoses = await getPatientDiagnoses(user.uid);
+        setDiagnoses(pdiagnoses);
+        console.log("Fetched diagnoses:", pdiagnoses);
+        pdiagnoses.forEach(diagnosis => {
+          getTreatmentHistory(diagnosis.id)
+            .then(treatments => {
+              setTreatments(prev => [...prev, ...treatments]);
+            })
+            .catch(error => {
+              console.error("Error fetching treatments for diagnosis", diagnosis.id, ":", error);
+            });
+        });
+      } catch (error) {
+        console.error("Error fetching diagnoses:", error);
+      }
     }
-  ]
-
-  const treatments = [
-    {
-      treatment: "Medication for Hypertension",
-      description: "Prescribed medication to manage blood pressure."
-    },
-    {
-      treatment: "Allergy Medication",
-      description: "Antihistamines for allergy symptoms."
-    },
-    {
-      treatment: "Asthma Inhaler",
-      description: "Inhaler for asthma symptoms."
-    }
-  ]
+    fetchAppointments();
+    fetchDiagnoses();
+  }, [])
 
   const uploadedDocuments = [
     {
@@ -143,13 +127,13 @@ export default function MedicalHistory() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Medical History</h1>
           <p className="text-[#4D7899] text-md">
-            Review your complete medical history, including past appointments, diagnoses, treatments, and uploaded documents.
+            Review your complete medical history, including appointments, diagnoses, treatments, and uploaded documents.
           </p>
         </div>
 
-        {/* Past Appointments */}
+        {/*  Appointments */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Past Appointments</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Appointments</h2>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -159,7 +143,7 @@ export default function MedicalHistory() {
                       Date
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                      Doctor
+                      Visit Type
                     </th>
                    
                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
@@ -168,22 +152,28 @@ export default function MedicalHistory() {
                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {pastAppointments.map((appointment, index) => (
+                  {appointments.map((appointment, index) => (
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-md text-[#4D7899]">
-                        {appointment.date}
+                        {appointment.start_time.toDate().toLocaleDateString('en-US')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
-                        {appointment.doctor}
+                        {appointment.visitType}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-md text-[#4D7899]">
-                        {appointment.reason}
+                        {appointment.reason_for_visit}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-md text-[#4D7899]">
                         {appointment.status}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
+                        {appointment.payment_method} - {appointment.payment_amount}
                       </td>
                     </tr>
                   ))}
@@ -205,10 +195,10 @@ export default function MedicalHistory() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-medium text-[#4D7899] mb-2">
-                      {diagnosis.condition}
+                      {diagnosis.prescription}
                     </h3>
                     <p className="text-gray-700 text-sm">
-                      {diagnosis.description}
+                      {diagnosis.instructions}
                     </p>
                   </div>
                 </div>
@@ -216,31 +206,62 @@ export default function MedicalHistory() {
             ))}
           </div>
         </section>
-
-        {/* Treatments */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Treatments</h2>
-          <div className="space-y-4">
-            {treatments.map((treatment, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <Pill className="w-5 h-5 text-[#4D7899] mt-1" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-medium text-[#4D7899] mb-2">
-                      {treatment.treatment}
-                    </h3>
-                    <p className="text-gray-700 text-sm">
-                      {treatment.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Medications</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                      Medication
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                      Diagnosis
+                    </th>
+                   
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                      Dosage
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                      Frequency
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                      Refills
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                        Notes
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {treatments.map((treatment, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-[#4D7899]">
+                        {treatment.medicationName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
+                        {treatment.diagnoseName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-[#4D7899]">
+                        {treatment.dosage}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-[#4D7899]">
+                        {treatment.frequency}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
+                        {treatment.refills}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-md text-gray-900">
+                        {treatment.notes}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
-
         {/* Uploaded Documents */}
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Uploaded Documents</h2>

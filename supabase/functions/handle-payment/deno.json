@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "lib": ["deno.window", "esnext"]
+  },
+  "imports": {
+    "std/": "https://deno.land/std@0.215.0/"
+  }
+}
