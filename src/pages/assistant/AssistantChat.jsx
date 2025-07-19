@@ -1,160 +1,157 @@
-import { useState } from "react";
-import { FaWhatsapp } from "react-icons/fa";
+// src/pages/ChatPage.jsx
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
-import { FiX, FiArrowRight } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
+import { FiArrowRight } from "react-icons/fi";
+import {
+  getOrCreateChat,
+  getMessages,
+  sendMessage,
+} from "../../services/firebase/chatServices";
+import { fetchAllPatients } from "../../services/firebase/AssistantpatientsServices";
 
-const dummyChats = [
-  {
-    id: 1,
-    name: "Merna Nabil",
-    lastMessage: "How can I book an appointment?",
-    avatar: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: 2,
-    name: "Ali Mostafa",
-    lastMessage: "Thanks for your help!",
-    avatar: "https://i.pravatar.cc/100?img=8",
-  },
-  {
-    id: 3,
-    name: "Sara Hossam",
-    lastMessage: "Do I need to fast before lab?",
-    avatar: "https://i.pravatar.cc/100?img=12",
-  },
-  {
-    id: 4,
-    name: "Sara Hossam",
-    lastMessage: "Do I need to fast before lab?",
-    avatar: "https://i.pravatar.cc/100?img=12",
-  },
-];
+const currentUserId = "user1"; // ✅ استبدليه بعدين بالـ auth
 
-export default function Messages() {
+export default function ChatPage() {
+  const [patients, setPatients] = useState([]); // ✅ بدل dummyChats
   const [selectedChat, setSelectedChat] = useState(null);
-  const [input, setInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [messages, setMessages] = useState([
-    { from: "user", text: "Hello!" },
-    { from: "assistant", text: "Hi, how can I assist you today?" },
-  ]);
+  const [chatId, setChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
 
-  const handleSend = () => {
-    if (input.trim() !== "") {
-      setMessages([...messages, { from: "assistant", text: input }]);
-      setInput("");
+  useEffect(() => {
+    const fetchPatients = async () => {
+      const data = await fetchAllPatients();
+      setPatients(data);
+    };
+    fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    if (chatId) {
+      loadMessages(chatId);
     }
+  }, [chatId]);
+
+  const loadMessages = async (id) => {
+    const msgs = await getMessages(id);
+    setMessages(msgs);
   };
 
-  const filteredChats = dummyChats.filter((chat) =>
-    chat.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleChatSelect = async (chat) => {
+    setSelectedChat(chat);
+    const chatId = await getOrCreateChat(currentUserId, chat.id); // 👈 استخدم patient.id
+    setChatId(chatId);
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+    await sendMessage(chatId, currentUserId, newMessage);
+    setNewMessage("");
+    loadMessages(chatId);
+  };
+
+  const formatTime = (timestamp) => {
+    if (!timestamp?.toDate) return "";
+    const date = timestamp.toDate();
+    return date.toLocaleString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   return (
-   <div className="min-h-screen bg-white pt-16 pl-64 pr-4 flex">
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">Medicall</h1>
-      </nav>
-  {/* Sidebar ثابت */}
-  <Sidebar />
+    <div className="flex h-screen">
+      <Sidebar />
+      <div className="flex flex-1 flex-col bg-gray-100">
+        <header className="bg-white p-4 shadow flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-gray-700">Messages</h1>
+          <FaWhatsapp className="text-green-500 text-2xl" />
+        </header>
 
-  {/* قائمة المحادثات */}
-  <div className={`transition-all duration-300 w-full md:w-1/2 p-4 overflow-y-auto mt-5 ml-2`}>
-    <h2 className="text-2xl font-semibold text-gray-800 mb-5">Recent Chats</h2>
-    <input
-      type="text"
-      placeholder=" Search..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
-    />
-    {filteredChats.map((chat) => (
-      <div
-        key={chat.id}
-        onClick={() => setSelectedChat(chat)}
-        className="flex items-center gap-4 mb-4 hover:bg-gray-50 p-3 rounded-lg cursor-pointer relative"
-      >
-        <div className="relative">
-          <img
-            src={chat.avatar}
-            alt={chat.name}
-            className="w-12 h-12 rounded-full object-cover"
-          />
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-sky-700 border-2 border-white rounded-full" />
+        <div className="flex flex-1">
+          {/* Chat List */}
+          <aside className="w-1/3 bg-white border-r overflow-y-auto">
+            {patients.map((patient) => (
+              <div
+                key={patient.id}
+                className="flex items-center p-4 cursor-pointer hover:bg-gray-100"
+                onClick={() => handleChatSelect(patient)}
+              >
+                <img
+                  src={patient.avatar || "https://i.pravatar.cc/100"} // fallback
+                  alt={patient.name}
+                  className="w-12 h-12 rounded-full mr-4"
+                />
+                <div>
+                  <p className="font-semibold">{patient.name}</p>
+                </div>
+              </div>
+            ))}
+          </aside>
+
+          {/* Chat Window */}
+          <main className="flex flex-1 flex-col">
+            {selectedChat ? (
+              <>
+                {/* Chat Header */}
+                <div className="bg-white p-4 flex items-center border-b">
+                  <img
+                    src={selectedChat.avatar || "https://i.pravatar.cc/100"}
+                    alt={selectedChat.name}
+                    className="w-10 h-10 rounded-full mr-4"
+                  />
+                  <h2 className="font-semibold">{selectedChat.name}</h2>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`p-3 rounded-lg max-w-xs ${
+                        msg.senderId === currentUserId
+                          ? "bg-green-100 self-end"
+                          : "bg-white"
+                      }`}
+                    >
+                      <p className="text-sm">{msg.text}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatTime(msg.createdAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Message Input */}
+                <div className="bg-white p-4 flex items-center border-t">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    className="flex-1 border rounded-lg p-2 mr-2"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    className="bg-green-500 text-white p-2 rounded-lg"
+                  >
+                    <FiArrowRight />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 items-center justify-center text-gray-500">
+                Select a chat to start messaging
+              </div>
+            )}
+          </main>
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-800">{chat.name}</p>
-          <p className="text-xs text-gray-500 truncate">{chat.lastMessage}</p>
-        </div>
-        <FaWhatsapp className="text-sky-700 text-lg" />
-      </div>
-    ))}
-    {filteredChats.length === 0 && (
-      <div className="text-gray-400 text-sm text-center mt-20">
-        No chats found...
-      </div>
-    )}
-  </div>
-
-  {selectedChat && (
-    <div className="hidden md:flex flex-col w-1/2 bg-[#f0f9ff] border-l border-gray-300 ">
-      {/* Header */}
-      <div className="bg-white text-gray-900 px-6 py-4 shadow flex items-center justify-between border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <img
-            src={selectedChat.avatar}
-            alt={selectedChat.name}
-            className="w-10 h-10 rounded-full object-cover"
-          />
-          <h1 className="text-lg font-semibold">{selectedChat.name}</h1>
-        </div>
-        <button
-          onClick={() => setSelectedChat(null)}
-          className="text-sky-700 p-2 rounded hover:text-sky-800"
-          aria-label="Close chat"
-        >
-          <FiX className="text-2xl" />
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`w-fit px-4 py-2 rounded-2xl shadow-md text-sm leading-snug ${
-              msg.from === "assistant"
-                ? "ml-auto bg-blue-100 text-right rounded-br-sm"
-                : "mr-auto bg-gray-100 text-left rounded-bl-sm"
-            }`}
-          >
-            {msg.text}
-          </div>
-        ))}
-      </div>
-
-      {/* Input */}
-      <div className="bg-white px-4 py-3 flex gap-2 border-t border-gray-200">
-        <input
-          type="text"
-          placeholder="Type a message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          onClick={handleSend}
-          className="text-sky-700 p-3 rounded hover:text-sky-800 cursor-pointer"
-          aria-label="Send message"
-        >
-          <FiArrowRight className="text-xl" />
-        </button>
       </div>
     </div>
-  )}
-</div>
-
   );
 }
-
-

@@ -6,7 +6,6 @@ import { handleSignOut } from '../../services/firebase/auth';
 import { AuthContext } from '../../context/Authcontext';
 
 
-
 export default function Layout() {
   const [activeNav, setActiveNav] = useState()
   const { setLoading ,user} = useContext(AuthContext)
@@ -42,6 +41,9 @@ export default function Layout() {
                     <Link onClick={()=>{setActiveNav("Book Appointment")}} to={"Book Appointment"} className={`${activeNav == "Book Appointment" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
                       Book Appointment
                     </Link>
+                    <Link onClick={()=>{setActiveNav("patient chat")}} to={"patient chat"} className={`${activeNav == "patient chat" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
+                      Chat
+                    </Link>
               <button onClick={() => {
                 setLoading(true)
                 handleSignOut()
@@ -69,8 +71,7 @@ export default function Layout() {
                       <Link
                         to={item}
                         key={item}
-                        onClick={() => setActiveNav(item)}
-                        className={`text-md cursor-pointer w-full font-medium transition-colors ${
+                        onClick={() => setActiveNav(item)} className={`text-md cursor-pointer w-full font-medium transition-colors ${
                           activeNav === item 
                             ? 'text-teal-600' 
                             : 'text-gray-700 hover:text-black'
@@ -81,6 +82,9 @@ export default function Layout() {
                         ))}
                     <Link onClick={()=>{setActiveNav("Book Appointment")}} to={"Book Appointment"} className={`${activeNav == "Book Appointment" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
                       Book Appointment
+                    </Link>
+                    <Link onClick={()=>{setActiveNav("patient chat")}} to={"patient chat"} className={`${activeNav == "patient chat" ? "bg-teal-500" :""} bg-[#BFD9ED] text-md text-[#0F141A] px-6 py-2 rounded-lg font-medium hover:bg-teal-500 transition-colors`}>
+                      Chat
                     </Link>
               <button onClick={() => {
                 setLoading(true)
@@ -94,4 +98,3 @@ export default function Layout() {
         <Outlet></Outlet>
     </>
 }
-
