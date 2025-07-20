@@ -135,7 +135,7 @@ export default function MedicalHistory() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Appointments</h2>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-scroll h-[400px]">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
