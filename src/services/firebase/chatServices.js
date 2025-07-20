@@ -1,63 +1,39 @@
-// src/services/firebase/chatServices.js
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  serverTimestamp,
-  doc,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "./config";
+import { db } from "../../services/firebase/config.js";
+import { collection, addDoc, query, where, getDocs, orderBy } from "firebase/firestore";
+import { serverTimestamp } from "firebase/firestore";
 
-
-export const getOrCreateChat = async (assistantId, patientId) => {
-  const q = query(
-    collection(db, "chats"),
-    where("users", "in", [
-      [assistantId, patientId],
-      [patientId, assistantId],
-    ])
-  );
+export const getOrCreateChat = async (userAId, userBId) => {
+  const chatsRef = collection(db, "chats");
+  const q = query(chatsRef, where("members", "array-contains", userAId));
   const snapshot = await getDocs(q);
-
-  if (!snapshot.empty) {
-    return snapshot.docs[0].id;
-  } else {
-    const docRef = await addDoc(collection(db, "chats"), {
-      users: [assistantId, patientId],
-      lastMessage: "",
-    });
-    return docRef.id;
-  }
+  let chatDoc = null;
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    if (
+      data.members.length === 2 &&
+      data.members.includes(userAId) &&
+      data.members.includes(userBId)
+    ) {
+      chatDoc = docSnap;
+    }
+  });
+  if (chatDoc) return chatDoc.id;
+  const newChat = await addDoc(chatsRef, { members: [userAId, userBId] });
+  return newChat.id;
 };
 
-// إرسال رسالة
 export const sendMessage = async (chatId, senderId, text) => {
-  const message = {
-    text,
+  const messagesRef = collection(db, "chats", chatId, "messages");
+  await addDoc(messagesRef, {
     senderId,
-    createdAt: serverTimestamp(),
-  };
-
-  await addDoc(collection(db, "chats", chatId, "messages"), message);
-
-  // تحديث آخر رسالة
-  const chatRef = doc(db, "chats", chatId);
-  await setDoc(chatRef, { lastMessage: text }, { merge: true });
+    text,
+    createdAt: serverTimestamp()
+  });
 };
 
-// جلب الرسائل مرتبة زمنيًا
 export const getMessages = async (chatId) => {
-  const q = query(
-    collection(db, "chats", chatId, "messages"),
-    orderBy("createdAt", "asc")
-  );
+  const messagesRef = collection(db, "chats", chatId, "messages");
+  const q = query(messagesRef, orderBy("createdAt"));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };

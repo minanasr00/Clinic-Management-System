@@ -1,8 +1,7 @@
-// src/pages/ChatPage.jsx
 import { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import { FaWhatsapp } from "react-icons/fa";
-import { FiArrowRight } from "react-icons/fi";
+import { FiX, FiArrowRight } from "react-icons/fi";
 import {
   getOrCreateChat,
   getMessages,
@@ -10,11 +9,11 @@ import {
 } from "../../services/firebase/chatServices";
 import { fetchAllPatients } from "../../services/firebase/AssistantpatientsServices";
 
-const currentUserId = "user1"; // ✅ استبدليه بعدين بالـ auth
+const currentUserId = "assistant1"; // استبدله بالـ auth بعدين
 
-export default function ChatPage() {
-  const [patients, setPatients] = useState([]); // ✅ بدل dummyChats
-  const [selectedChat, setSelectedChat] = useState(null);
+const AssistantChat = () => {
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [chatId, setChatId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -28,9 +27,11 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    if (chatId) {
+    if (!chatId) return;
+    const interval = setInterval(() => {
       loadMessages(chatId);
-    }
+    }, 2000);
+    return () => clearInterval(interval);
   }, [chatId]);
 
   const loadMessages = async (id) => {
@@ -38,10 +39,19 @@ export default function ChatPage() {
     setMessages(msgs);
   };
 
-  const handleChatSelect = async (chat) => {
-    setSelectedChat(chat);
-    const chatId = await getOrCreateChat(currentUserId, chat.id); // 👈 استخدم patient.id
+  const handlePatientSelect = async (patient) => {
+    setSelectedPatient(patient);
+    setNewMessage("");
+    const chatId = await getOrCreateChat(currentUserId, patient.id);
     setChatId(chatId);
+    loadMessages(chatId);
+  };
+
+  const handleCloseChat = () => {
+    setSelectedPatient(null);
+    setChatId(null);
+    setMessages([]);
+    setNewMessage("");
   };
 
   const handleSendMessage = async () => {
@@ -64,94 +74,95 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex flex-1 flex-col bg-gray-100">
-        <header className="bg-white p-4 shadow flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-700">Messages</h1>
-          <FaWhatsapp className="text-green-500 text-2xl" />
-        </header>
-
-        <div className="flex flex-1">
-          {/* Chat List */}
-          <aside className="w-1/3 bg-white border-r overflow-y-auto">
+      <div className="flex flex-1">
+        <div className="w-1/2 p-4 border-r bg-white flex flex-col ml-60">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <FaWhatsapp className="text-green-500" /> Chat with Patients
+          </h2>
+          <div className="flex flex-col gap-4">
             {patients.map((patient) => (
               <div
                 key={patient.id}
-                className="flex items-center p-4 cursor-pointer hover:bg-gray-100"
-                onClick={() => handleChatSelect(patient)}
+                className={`bg-white p-4 rounded shadow cursor-pointer hover:bg-gray-100 flex items-center gap-4 ${
+                  selectedPatient?.id === patient.id ? "border-2 border-green-500" : ""
+                }`}
+                onClick={() => handlePatientSelect(patient)}
               >
                 <img
-                  src={patient.avatar || "https://i.pravatar.cc/100"} // fallback
+                  src={patient.avatar || `https://i.pravatar.cc/100?u=${patient.id}`}
                   alt={patient.name}
-                  className="w-12 h-12 rounded-full mr-4"
+                  className="w-12 h-12 rounded-full"
                 />
                 <div>
-                  <p className="font-semibold">{patient.name}</p>
+                  <h3 className="font-semibold">{patient.name}</h3>
+                  <p className="text-gray-500">Click to view</p>
                 </div>
+                <FiArrowRight className="ml-auto text-gray-400" />
               </div>
             ))}
-          </aside>
+          </div>
+        </div>
 
-          {/* Chat Window */}
-          <main className="flex flex-1 flex-col">
-            {selectedChat ? (
-              <>
-                {/* Chat Header */}
-                <div className="bg-white p-4 flex items-center border-b">
-                  <img
-                    src={selectedChat.avatar || "https://i.pravatar.cc/100"}
-                    alt={selectedChat.name}
-                    className="w-10 h-10 rounded-full mr-4"
-                  />
-                  <h2 className="font-semibold">{selectedChat.name}</h2>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`p-3 rounded-lg max-w-xs ${
-                        msg.senderId === currentUserId
-                          ? "bg-green-100 self-end"
-                          : "bg-white"
-                      }`}
-                    >
-                      <p className="text-sm">{msg.text}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatTime(msg.createdAt)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Message Input */}
-                <div className="bg-white p-4 flex items-center border-t">
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    className="flex-1 border rounded-lg p-2 mr-2"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    className="bg-green-500 text-white p-2 rounded-lg"
-                  >
-                    <FiArrowRight />
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-1 items-center justify-center text-gray-500">
-                Select a chat to start messaging
+        <div className="w-1/2 flex items-stretch justify-center">
+          {selectedPatient ? (
+            <div className="relative bg-white rounded shadow w-full max-w-md flex flex-col h-full">
+              <button
+                onClick={handleCloseChat}
+                className="absolute top-4 right-4 text-red-500 z-10"
+              >
+                <FiX size={24} />
+              </button>
+              <div className="flex flex-col items-center pt-8 pb-2">
+                <img
+                  src={selectedPatient.avatar || `https://i.pravatar.cc/100?u=${selectedPatient.id}`}
+                  alt={selectedPatient.name}
+                  className="w-20 h-20 rounded-full mb-2"
+                />
+                <h3 className="text-xl font-bold mb-1">{selectedPatient.name}</h3>
               </div>
-            )}
-          </main>
+              <div className="flex-1 overflow-y-auto px-6 py-2 space-y-2">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`p-2 rounded-lg max-w-xs ${
+                      msg.senderId === currentUserId
+                        ? "bg-green-100 self-end ml-auto"
+                        : "bg-gray-100"
+                    }`}
+                  >
+                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-xs text-gray-500 mt-1">{formatTime(msg.createdAt)}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center p-4 border-t bg-white sticky bottom-0">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="flex-1 border rounded-lg p-2 mr-2"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-green-500 text-white p-2 rounded-lg"
+                >
+                  <FiArrowRight />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-gray-400 text-lg flex items-center justify-center w-full">
+              اختر مريض من القائمة لعرض التفاصيل
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default AssistantChat;
