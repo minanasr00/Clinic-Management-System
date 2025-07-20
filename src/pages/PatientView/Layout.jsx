@@ -9,7 +9,7 @@ import { AuthContext } from '../../context/Authcontext';
 export default function Layout() {
   const [activeNav, setActiveNav] = useState()
   const { setLoading ,user} = useContext(AuthContext)
-    const navItems = ['Home', 'Medical history']
+  const navItems = ['Home', 'Medical history']
   const ref = useRef(null)
   const navigate = useNavigate()
     return <>

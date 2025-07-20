@@ -28,6 +28,7 @@ import { Toaster } from 'react-hot-toast';
 import DoctorLayout from './pages/Doctor/doctorLayout';
 import PaymentSuccess from './pages/PatientView/PaymentSuccess/PaymentSuccess';
 import { PaymentProvider } from './context/PaymentContext';
+import PatientChat from './pages/PatientView/patientchat/patientchat';
 
 
 const routes = [
@@ -37,7 +38,7 @@ const routes = [
       { path: "/patient/Home", element: <Home></Home> },
       { path: "Medical history", element: <MedicalHistory></MedicalHistory> },
       { path: "Book Appointment", element: <BookAppointment></BookAppointment> },
-      { path: "patient chat", element: <Messages></Messages> },
+      { path: "patient chat", element: <PatientChat></PatientChat> },
       { path: "payment", element: <Payment></Payment> },
       { path: "payment-success", element: <PaymentSuccess/> }
     ]

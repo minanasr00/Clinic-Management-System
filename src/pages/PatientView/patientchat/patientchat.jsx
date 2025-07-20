@@ -1,81 +1,79 @@
 import { useEffect, useState } from "react";
-import {
-  sendMessage,
-  listenForMessages,
-  getOrCreateChatId,
-} from "../../../services/firebase/chatServices";
-import { auth } from "../../../services/firebase/config";
-import { onAuthStateChanged } from "firebase/auth";
+import { FaWhatsapp } from "react-icons/fa";
+import { FiX, FiArrowRight } from "react-icons/fi";
+import { fetchAllAssistants } from "../../../services/firebase/assistantServices";
 
-export default function PatientChat() {
-  const [currentUserId, setCurrentUserId] = useState("");
-const assistantId = "ASSISTANT_ID";
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-
-  const [chatId, setChatId] = useState(null);
+const PatientChat = () => {
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setCurrentUserId(user.uid);
-        const id = await getOrCreateChatId(user.uid, assistantId);
-        setChatId(id);
-        listenForMessages(id, setMessages);
-      }
-    });
+    const fetchAssistants = async () => {
+      const data = await fetchAllAssistants();
+      setUsers(data);
+    };
 
-    return () => unsubscribe();
-  }, [assistantId]);
+    fetchAssistants();
+  }, []);
 
-  const handleSend = async () => {
-    if (newMessage.trim() === "" || !chatId) return;
-    await sendMessage(chatId, newMessage, currentUserId);
-    setNewMessage("");
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+  };
+
+  const handleCloseChat = () => {
+    setSelectedUser(null);
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 flex flex-col h-screen">
-      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${
-              msg.senderId === currentUserId ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-[70%] px-4 py-2 rounded-lg shadow text-white ${
-                msg.senderId === currentUserId
-                  ? "bg-blue-500 rounded-br-none"
-                  : "bg-gray-400 rounded-bl-none"
-              }`}
-            >
-              <p className="text-sm">{msg.text}</p>
-              {msg.createdAt?.seconds && (
-                <p className="text-[10px] text-white text-right mt-1">
-                  {new Date(msg.createdAt.seconds * 1000).toLocaleTimeString()}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+    
+      
 
-      <div className="flex items-center gap-2">
-        <input
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 px-4 py-2 border rounded-lg outline-none"
-        />
-        <button
-          onClick={handleSend}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg"
-        >
-          Send
-        </button>
+      <div className="flex-1 flex flex-col p-4 bg-gray-50 min-h-screen">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <FaWhatsapp className="text-green-500" /> Chat with Assistant
+        </h2>
+
+        {!selectedUser ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {users.map((user) => (
+              <div
+                key={user.id}
+                className="bg-white p-4 rounded shadow cursor-pointer hover:bg-gray-100 flex items-center gap-4"
+                onClick={() => handleUserClick(user)}
+              >
+                <img
+                src={user.avatar || `https://i.pravatar.cc/100?u=${user.id}`}
+                alt={user.name}
+                className="w-12 h-12 rounded-full"
+              />
+
+                <div>
+                  <h3 className="font-semibold">{user.name}</h3>
+                  <p className="text-gray-500">Click to chat</p>
+                </div>
+                <FiArrowRight className="ml-auto text-gray-400" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="relative bg-white p-4 rounded shadow">
+            <button
+              onClick={handleCloseChat}
+              className="absolute top-2 right-2 text-red-500"
+            >
+              <FiX size={20} />
+            </button>
+            <h3 className="text-lg font-bold mb-2">{selectedUser.name}</h3>
+            <ChatBox
+              receiverId={selectedUser.id}
+              receiverName={selectedUser.name}
+              receiverAvatar={selectedUser.avatar}
+            />
+          </div>
+        )}
       </div>
-    </div>
+   
   );
-}
+};
+
+export default PatientChat;

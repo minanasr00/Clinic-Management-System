@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./config";
 
-// إنشاء أو جلب شات بين اتنين
+
 export const getOrCreateChat = async (assistantId, patientId) => {
   const q = query(
     collection(db, "chats"),
