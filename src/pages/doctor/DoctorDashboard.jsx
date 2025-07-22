@@ -23,7 +23,7 @@ const DoctorDashboard = () => {
   const [showPatientSlider, setShowPatientSlider] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -71,7 +71,7 @@ const DoctorDashboard = () => {
       </div> */}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-y-auto">
+      <div className="flex-1 flex flex-col overflow-y-auto w-screen">
         {/* Top bar for mobile */}
         <div className="md:hidden flex justify-between items-center p-4 bg-white shadow">
           <button onClick={() => setSidebarOpen(true)} className="text-xl text-gray-700">
@@ -81,7 +81,7 @@ const DoctorDashboard = () => {
           <div className="w-6" /> {/* Spacer */}
         </div>
 
-        <main className="flex-1 bg-[#f7fafc] p-4 md:p-8 w-full max-w-7xl mx-auto">
+        <main className="flex-1 bg-[#f7fafc] p-4 md:p-8 w-full max-w-screen mx-auto">
           <h1 className="text-2xl md:text-4xl font-bold mb-6">Dashboard</h1>
 
           {/* Upcoming Appointments */}

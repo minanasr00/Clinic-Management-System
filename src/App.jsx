@@ -45,6 +45,7 @@ const routes = [
   },
   {
     path: "/doctor", element: <Authgaurd allowedRoles={["doctor"]}><DoctorLayout /></Authgaurd>, children: [
+      { index: true, element: <Navigate to="/doctor/Dashboard" replace /> },
       { path: "/doctor/Dashboard", element: <DoctorDashboard></DoctorDashboard> },
       { path: "AppointmentsPage", element: <AppointmentsPage></AppointmentsPage> },
       { path: "AddAssistant", element: <AddAssistantPage></AddAssistantPage> },

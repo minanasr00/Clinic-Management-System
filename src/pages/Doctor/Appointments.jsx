@@ -2,35 +2,40 @@ import { useState } from 'react';
 import { LuChevronLeft, LuChevronRight, LuPlus, LuSearch, LuCalendar } from 'react-icons/lu';
 
 import AdminNav from './AdminNav';
+import { fetchAppointments } from '../../services/firebase/appointmentsServiceDoctor';
+
+const appointments = await fetchAppointments();
+console.log(appointments); // Log appointments to verify data fetching
+ // Fetch appointments from the service
 
 export default function AppointmentsPage() {
   const [currentDate, setCurrentDate] = useState(new Date(2024, 9, 26)); // October 26, 2024
   const [selectedDate, setSelectedDate] = useState(26);
-  const [view, setView] = useState('calendar'); // 'calendar' or 'list'
+  // const [view, setView] = useState('calendar'); // 'calendar' or 'list'
 
-  const appointments = [
-    {
-      id: 1,
-      time: '9:00',
-      patient: 'Liam Carter',
-      type: 'Routine Checkup',
-      status: 'confirmed'
-    },
-    {
-      id: 2,
-      time: '10:30',
-      patient: 'Olivia Bennett',
-      type: 'Follow-up',
-      status: 'confirmed'
-    },
-    {
-      id: 3,
-      time: '1:00',
-      patient: 'Noah Thompson',
-      type: 'Consultation',
-      status: 'pending'
-    }
-  ];
+  // [
+  //   {
+  //     id: 1,
+  //     time: '9:00',
+  //     patient: 'Liam Carter',
+  //     type: 'Routine Checkup',
+  //     status: 'confirmed'
+  //   },
+  //   {
+  //     id: 2,
+  //     time: '10:30',
+  //     patient: 'Olivia Bennett',
+  //     type: 'Follow-up',
+  //     status: 'confirmed'
+  //   },
+  //   {
+  //     id: 3,
+  //     time: '1:00',
+  //     patient: 'Noah Thompson',
+  //     type: 'Consultation',
+  //     status: 'pending'
+  //   }
+  // ];
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -116,7 +121,7 @@ export default function AppointmentsPage() {
               </div>
 
               {/* View Toggle */}
-              <div className="flex items-center justify-between mb-6">
+              {/* <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={() => setView('calendar')}
@@ -139,7 +144,7 @@ export default function AppointmentsPage() {
                     List
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Calendar */}
               <div className="mb-6">
@@ -171,7 +176,7 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Right Panel - Appointments for Selected Day */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-screen max-h-180 overflow-y-auto">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Appointments for Oct {selectedDate}, 2024
@@ -181,20 +186,22 @@ export default function AppointmentsPage() {
                 {appointments.map((appointment) => (
                   <div key={appointment.id} className="border-l-4 border-blue-500 pl-4 py-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-900">{appointment.time}</span>
+                      <span className="text-sm font-medium text-gray-900">{appointment.start_time.toDate().toLocaleString()}</span>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        appointment.status === 'confirmed' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
+                        appointment.status === 'completed' ? 'bg-green-100 text-green-800' 
+                          : appointment.status === 'delayed' ? 'bg-yellow-100 text-yellow-800'
+                          : appointment.status === 'cancelled' ? 'bg-red-100 text-red-800'
+                          : appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
                         {appointment.status}
                       </span>
                     </div>
                     <div className="text-sm font-medium text-gray-900 mb-1">
-                      {appointment.patient}
+                      {appointment.patient_id}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {appointment.type}
+                      {appointment.reason_for_visit || 'No reason provided'}
                     </div>
                   </div>
                 ))}

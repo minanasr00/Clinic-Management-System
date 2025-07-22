@@ -27,6 +27,8 @@ export default function AdminSideNav() {
     Assistants: "/Doctor/AddAssistant",
     Prescriptions: "/",
   };
+  
+  const activeRoute = Object.keys(routes).find(key => routes[key] === location.pathname);
 
   useEffect(() => {
   const getPatients = async () => {
@@ -65,6 +67,7 @@ export default function AdminSideNav() {
           route={routes.Dashboard}
           currentPath={location.pathname}
           onClick={() => navigate(routes.Dashboard)}
+          isActive={activeRoute === routes.Dashboard}
         />
         <SidebarItem
           icon={<FaCalendarAlt />}
@@ -114,7 +117,7 @@ export default function AdminSideNav() {
 
         <SidebarItem
           icon={<FaUserNurse />}
-          label="Assistants"
+          label="Add New Assistant"
           route={routes.Assistants}
           currentPath={location.pathname}
           onClick={() => navigate(routes.Assistants)}
