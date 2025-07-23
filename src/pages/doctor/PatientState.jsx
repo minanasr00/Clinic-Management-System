@@ -1,8 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { fetchPatientById } from "../../services/firebase/patientServiceSingle";
+import { fetchAppointmentsByPatientId } from "../../services/firebase/appointmentsServiceSinglePatient";
+import { fetchDiagnosesByPatientId, addDiagnosis } from "../../services/firebase/diagnosesService";
+import {
+  fetchMedicationsByPrescriptionIds,
+  addPrescriptionMedication,
+  updatePrescriptionMedication
+} from "../../services/firebase/medicationsService";
 import { FaBell, FaBars } from "react-icons/fa";
-import AdminSideNav from "./AdminSideNav";
+import AdminSideNav from "../../pages/doctor/AdminSideNav";
 import doctorimg from "../../assets/istockphoto-92347250-612x612.jpg";
 import logo from "../../assets/logo.jpg";
+import toast from "react-hot-toast";
 
 const PatientState = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -11,71 +22,201 @@ const PatientState = () => {
   const [selectedDiagnosis, setSelectedDiagnosis] = useState(null);
   const [editIndex, setEditIndex] = useState(null);
   const [showDiagnosisModal, setShowDiagnosisModal] = useState(false);
-  const [newDiagnosis, setNewDiagnosis] = useState({ name: "", date: "" });
+  const [newDiagnosis, setNewDiagnosis] = useState({
+    name: "",
+    date: "",
+    instructions: "",
+    notes: ""
+  });
+  const [patientAppointments, setPatientAppointments] = useState([]);
+  const [isAddingDiagnosis, setIsAddingDiagnosis] = useState(false);
+  const [isAddingPrescription, setIsAddingPrescription] = useState(false);
+  const [editingPrescriptionId, setEditingPrescriptionId] = useState(null);
+  const navigate = useNavigate();
+
 
   const [formData, setFormData] = useState({
-    medication: "",
+    medicationName: "",
     dosage: "",
     frequency: "",
     refills: "",
-    status: "Active",
+    notes: "",
+    diagnoseName: "",
   });
 
+  const { patientId } = useParams();
+  console.log("Route patient ID:", patientId);
+
+  const [patientInfo, setPatientInfo] = useState(null);
+  const [diagnoses, setDiagnoses] = useState([]);
+
+  // Mock current doctor ID - you should replace this with actual authentication
+  const currentDoctorId = "IP5k3oM6YRUs0yCzmTIBQMAg0Um1"; // Replace with actual doctor ID from your auth system
+
+  useEffect(() => {
+    const getPatientData = async () => {
+      try {
+        // Clear all state when patient changes
+        setPatientInfo(null);
+        setDiagnoses([]);
+        setPrescriptions([]);
+        setPatientAppointments([]);
+
+        const data = await fetchPatientById(patientId);
+        if (data) {
+          setPatientInfo(data);
+          console.log("Patient data loaded:", data);
+        } else {
+          console.warn("Patient not found");
+        }
+      } catch (err) {
+        console.error("Failed to load patient:", err);
+      }
+    };
+
+    if (patientId) {
+      getPatientData();
+
+      fetchAppointmentsByPatientId(patientId)
+        .then((appointments) => {
+          const sortedAppointments = appointments.sort((a, b) =>
+            a.start_time.toDate() > b.start_time.toDate() ? -1 : 1
+          );
+          setPatientAppointments(sortedAppointments);
+        })
+        .catch((error) => console.error("Failed to fetch appointments:", error));
+
+      fetchDiagnosesByPatientId(patientId)
+        .then(async (fetchedDiagnoses) => {
+          console.log("Fetched diagnoses:", fetchedDiagnoses);
+
+          // Sort diagnoses by date (newest to oldest)
+          const sortedDiagnoses = fetchedDiagnoses.sort((a, b) => {
+            const dateA = a.date_issued?.toDate ? a.date_issued.toDate() : new Date(0);
+            const dateB = b.date_issued?.toDate ? b.date_issued.toDate() : new Date(0);
+            return dateB - dateA; // Descending order (newest first)
+          });
+
+          setDiagnoses(sortedDiagnoses);
+
+          // Fetch prescriptions for all diagnoses
+          const diagnosisIds = fetchedDiagnoses.map(d => d.id);
+          if (diagnosisIds.length > 0) {
+            const medications = await fetchMedicationsByPrescriptionIds(diagnosisIds);
+            console.log("Fetched medications:", medications);
+            setPrescriptions(medications);
+          } else {
+            // If no diagnoses, make sure prescriptions are empty
+            setPrescriptions([]);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load diagnoses:", err);
+          // Clear prescriptions on error as well
+          setPrescriptions([]);
+        });
+    }
+  }, [patientId]); // This effect runs when patientId changes
+
   const selectedPatient = {
-    name: "Alice Johnson",
-    image: "https://randomuser.me/api/portraits/women/1.jpg",
-    nextAppointment: "2025-07-12",
+    name: patientInfo?.name || "Loading...",
+    image: patientInfo?.imgurl || "https://via.placeholder.com/150",
+    email: patientInfo?.email || "N/A",
+    dob: patientInfo?.dob || "N/A",
+    gender: patientInfo?.gender || "N/A",
+    phone: patientInfo?.phone || "N/A",
   };
 
-  const [diagnoses, setDiagnoses] = useState([
-    { id: 1, name: "Hypertension", date: "2025-06-01" },
-    { id: 2, name: "Diabetes", date: "2025-06-15" },
-  ]);
-
   const handleAddPrescription = (diagnosis) => {
+    console.log("Adding prescription for diagnosis:", diagnosis);
     setSelectedDiagnosis(diagnosis);
     setFormData({
-      medication: "",
+      medicationName: "",
       dosage: "",
       frequency: "",
       refills: "",
-      status: "Active",
+      notes: "",
+      diagnoseName: diagnosis.prescription,
     });
     setEditIndex(null);
+    setEditingPrescriptionId(null);
     setShowModal(true);
   };
 
-  const handleEditPrescription = (index) => {
-    const presc = prescriptions[index];
+  const handleEditPrescription = (prescription) => {
+    console.log("Editing prescription:", prescription);
     setFormData({
-      medication: presc.medication,
-      dosage: presc.dosage,
-      frequency: presc.frequency,
-      refills: presc.refills,
-      status: presc.status,
+      medicationName: prescription.medicationName || "",
+      dosage: prescription.dosage || "",
+      frequency: prescription.frequency || "",
+      refills: prescription.refills || "",
+      notes: prescription.notes || "",
+      diagnoseName: prescription.diagnoseName || "",
     });
-    setSelectedDiagnosis({ name: presc.diagnosis });
-    setEditIndex(index);
+    setEditingPrescriptionId(prescription.id);
+    setSelectedDiagnosis({ prescription: prescription.diagnoseName });
     setShowModal(true);
   };
 
-  const handleSavePrescription = (e) => {
+  const handleSavePrescription = async (e) => {
     e.preventDefault();
-    const updatedPrescription = {
-      ...formData,
-      diagnosis: selectedDiagnosis.name,
-    };
 
-    if (editIndex !== null) {
-      const updated = [...prescriptions];
-      updated[editIndex] = updatedPrescription;
-      setPrescriptions(updated);
-    } else {
-      setPrescriptions([...prescriptions, updatedPrescription]);
+    if (!formData.medicationName || !formData.dosage || !formData.frequency) {
+      toast.error("Please fill in all required fields");
+      return;
     }
 
-    setShowModal(false);
-    setEditIndex(null);
+    setIsAddingPrescription(true);
+    console.log("Saving prescription:", formData);
+
+    try {
+      if (editingPrescriptionId) {
+        // Update existing prescription
+        await updatePrescriptionMedication(editingPrescriptionId, {
+          medicationName: formData.medicationName,
+          dosage: formData.dosage,
+          frequency: formData.frequency,
+          refills: parseInt(formData.refills) || 0,
+          notes: formData.notes || null,
+          diagnoseName: formData.diagnoseName,
+        });
+
+        // Update local state
+        setPrescriptions(prev => prev.map(p =>
+          p.id === editingPrescriptionId
+            ? { ...p, ...formData, refills: parseInt(formData.refills) || 0 }
+            : p
+        ));
+
+        toast.success("Prescription updated successfully!");
+      } else {
+        // Add new prescription
+        const prescriptionData = {
+          medicationName: formData.medicationName,
+          dosage: formData.dosage,
+          frequency: formData.frequency,
+          refills: parseInt(formData.refills) || 0,
+          notes: formData.notes || null,
+          prescriptionId: selectedDiagnosis.id,
+          diagnoseName: selectedDiagnosis.prescription,
+        };
+
+        const docRef = await addPrescriptionMedication(prescriptionData);
+
+        // Add to local state
+        setPrescriptions(prev => [...prev, { id: docRef.id, ...prescriptionData }]);
+
+        toast.success("Prescription added successfully!");
+      }
+
+      setShowModal(false);
+      setEditingPrescriptionId(null);
+    } catch (error) {
+      console.error("Failed to save prescription:", error);
+      toast.error("Failed to save prescription. Please try again.");
+    } finally {
+      setIsAddingPrescription(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -83,16 +224,55 @@ const PatientState = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddNewDiagnosis = () => {
-    if (!newDiagnosis.name || !newDiagnosis.date) return;
-    const newEntry = {
-      id: diagnoses.length + 1,
-      name: newDiagnosis.name,
-      date: newDiagnosis.date,
+  const handleAddNewDiagnosis = async (e) => {
+    e.preventDefault();
+
+    if (!newDiagnosis.name || !newDiagnosis.date) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsAddingDiagnosis(true);
+    console.log("Adding diagnosis:", newDiagnosis);
+
+    const payload = {
+      prescription: newDiagnosis.name,
+      date_issued: new Date(newDiagnosis.date),
+      patient_id: patientId,
+      doctor_id: currentDoctorId,
+      instructions: newDiagnosis.instructions || "N/A",
+      notes: newDiagnosis.notes || null,
     };
-    setDiagnoses([...diagnoses, newEntry]);
-    setNewDiagnosis({ name: "", date: "" });
-    setShowDiagnosisModal(false);
+
+    try {
+      console.log("Payload to be sent:", payload);
+      const docRef = await addDiagnosis(payload);
+      console.log("Diagnosis added successfully:", docRef.id);
+
+      // Refresh the diagnoses list
+      const updatedDiagnoses = await fetchDiagnosesByPatientId(patientId);
+
+      // Sort diagnoses by date (newest to oldest)
+      const sortedDiagnoses = updatedDiagnoses.sort((a, b) => {
+        const dateA = a.date_issued?.toDate ? a.date_issued.toDate() : new Date(0);
+        const dateB = b.date_issued?.toDate ? b.date_issued.toDate() : new Date(0);
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      console.log("Updated diagnoses:", sortedDiagnoses);
+      setDiagnoses(sortedDiagnoses);
+
+      // Reset form and close modal
+      setNewDiagnosis({ name: "", date: "", instructions: "", notes: "" });
+      setShowDiagnosisModal(false);
+
+      toast.success("Diagnosis added successfully!");
+    } catch (error) {
+      console.error("Failed to add diagnosis:", error);
+      toast.error("Failed to add diagnosis. Please try again.");
+    } finally {
+      setIsAddingDiagnosis(false);
+    }
   };
 
   return (
@@ -103,17 +283,16 @@ const PatientState = () => {
             className="fixed inset-0 bg-opacity-40 z-40"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
-            <AdminSideNav /> 
-            {/* <AdminSidebar /> */}
-          </div>
+          {/* <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
+            <AdminSideNav />
+          </div> */}
         </>
       )}
 
       <div className="flex h-full">
-        <div className="hidden md:block">
-          {/* <AdminSideNav /> */}
-        </div>
+        {/* <div className="hidden md:block">
+          <AdminSideNav />
+        </div> */}
 
         <div className="flex-1 flex flex-col overflow-y-auto bg-[#f7fafc]">
           <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between sticky top-0 z-10">
@@ -138,30 +317,36 @@ const PatientState = () => {
           </nav>
 
           <main className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 bg-[#f8fafc]">
-            <h1 className="text-2xl sm:text-3xl font-bold">{selectedPatient.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold capitalize">{selectedPatient.name}</h1>
 
+            {/* Personal Info */}
             <section className="bg-white p-6 rounded shadow">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Personal Information</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm sm:text-base text-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm sm:text-base text-gray-700 capitalize">
                 <div className="font-bold">Full Name:</div>
                 <div>{selectedPatient.name}</div>
                 <div className="font-bold">Gender:</div>
-                <div>Female</div>
+                <div>{selectedPatient.gender}</div>
                 <div className="font-bold">Email:</div>
-                <div>alice@example.com</div>
+                <div>{selectedPatient.email}</div>
                 <div className="font-bold">Date of Birth:</div>
-                <div>1991-05-20</div>
+                <div>{selectedPatient.dob}</div>
                 <div className="font-bold">Contact:</div>
-                <div>+201123456789</div>
-                <div className="font-bold">Address:</div>
-                <div>Cairo, Egypt</div>
+                <div>{selectedPatient.phone}</div>
               </div>
             </section>
 
+            {/* Appointment History */}
             <section className="bg-white p-6 rounded shadow">
               <div className="flex justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Appointment History</h2>
-                <button className="text-[#299eed] text-sm hover:underline">View All</button>
+                <button
+                  onClick={() => navigate("/Doctor/AppointmentsPage")}
+                  className="bg-[#299eed] text-white px-4 py-2 rounded text-sm hover:bg-blue-600 cursor-pointer"
+                >
+                  View All
+                </button>
+
               </div>
               <table className="w-full text-sm sm:text-base font-semibold text-left">
                 <thead className="text-gray-500 border-b">
@@ -173,24 +358,54 @@ const PatientState = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t">
-                    <td className="py-2">2025-05-12</td>
-                    <td className="py-2">9:00 AM</td>
-                    <td className="py-2">Checkup</td>
-                    <td className="py-2">
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
-                        Completed
-                      </span>
-                    </td>
-                  </tr>
+                  {patientAppointments.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="py-4 text-center text-gray-500">
+                        No appointments found.
+                      </td>
+                    </tr>
+                  ) : (
+                    patientAppointments.map((appt) => (
+                      <tr key={appt.id} className="border-t">
+                        <td className="py-2">
+                          {appt.start_time?.toDate
+                            ? appt.start_time.toDate().toLocaleDateString("en-GB")
+                            : "N/A"}
+                        </td>
+                        <td className="py-2">
+                          {appt.start_time?.toDate
+                            ? appt.start_time.toDate().toLocaleTimeString("en-GB", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            : "N/A"}
+                        </td>
+                        <td className="py-2">{appt.type || "N/A"}</td>
+                        <td className="py-2">
+                          <span className={`px-2 py-1 rounded-full text-xs ${appt.status === "Completed"
+                            ? "bg-green-100 text-green-700"
+                            : appt.status === "Cancelled"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                            }`}>
+                            {appt.status || "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </section>
 
+            {/* Diagnosis */}
             <section className="bg-white p-6 rounded shadow">
               <div className="flex justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">Diagnosis</h2>
-                <button onClick={() => setShowDiagnosisModal(true)} className="bg-[#299eed] text-white px-4 py-2 rounded text-sm hover:bg-blue-600 cursor-pointer">
+                <button
+                  onClick={() => setShowDiagnosisModal(true)}
+                  className="bg-[#299eed] text-white px-4 py-2 rounded text-sm hover:bg-blue-600 cursor-pointer"
+                >
                   + Add New Diagnosis
                 </button>
               </div>
@@ -199,28 +414,43 @@ const PatientState = () => {
                   <tr>
                     <th className="py-2">Diagnosis</th>
                     <th className="py-2">Date</th>
+                    <th className="py-2">Instructions</th>
+                    <th className="py-2">Notes</th>
                     <th className="py-2">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {diagnoses.map((d) => (
-                    <tr key={d.id} className="border-t">
-                      <td className="py-2">{d.name}</td>
-                      <td className="py-2">{d.date}</td>
-                      <td className="py-2">
-                        <button
-                          className="text-sm text-blue-600 hover:underline cursor-pointer"
-                          onClick={() => handleAddPrescription(d)}
-                        >
-                          Add Prescription
-                        </button>
+                  {diagnoses.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-4 text-center text-gray-500">
+                        No diagnoses found.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    diagnoses.map((d) => (
+                      <tr key={d.id} className="border-t">
+                        <td className="py-2">{d.prescription}</td>
+                        <td className="py-2">
+                          {d.date_issued?.toDate ? d.date_issued.toDate().toLocaleDateString("en-GB") : "N/A"}
+                        </td>
+                        <td className="py-2">{d.instructions || "N/A"}</td>
+                        <td className="py-2">{d.notes || "N/A"}</td>
+                        <td className="py-2">
+                          <button
+                            className="text-sm text-blue-600 hover:underline cursor-pointer"
+                            onClick={() => handleAddPrescription(d)}
+                          >
+                            Add Prescription
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </section>
 
+            {/* Prescriptions */}
             <section className="bg-white p-6 rounded shadow">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Prescriptions</h2>
               <table className="w-full text-sm sm:text-base font-semibold text-left">
@@ -231,33 +461,37 @@ const PatientState = () => {
                     <th className="py-2">Dosage</th>
                     <th className="py-2">Frequency</th>
                     <th className="py-2">Refills</th>
-                    <th className="py-2">Status</th>
+                    <th className="py-2">Notes</th>
                     <th className="py-2">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {prescriptions.map((p, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="py-2">{p.medication}</td>
-                      <td className="py-2">{p.diagnosis}</td>
-                      <td className="py-2">{p.dosage}</td>
-                      <td className="py-2">{p.frequency}</td>
-                      <td className="py-2">{p.refills}</td>
-                      <td className="py-2">
-                        <span className={`px-2 py-1 rounded-full text-xs ${p.status === "Active" ? "bg-blue-100 text-blue-700" : p.status === "Completed" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="py-2">
-                        <button
-                          className="text-sm text-red-600 hover:underline cursor-pointer"
-                          onClick={() => handleEditPrescription(idx)}
-                        >
-                          Edit
-                        </button>
+                  {prescriptions.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="py-4 text-center text-gray-500">
+                        No prescriptions found.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    prescriptions.map((p) => (
+                      <tr key={p.id} className="border-t">
+                        <td className="py-2">{p.medicationName}</td>
+                        <td className="py-2">{p.diagnoseName}</td>
+                        <td className="py-2">{p.dosage}</td>
+                        <td className="py-2">{p.frequency}</td>
+                        <td className="py-2">{p.refills}</td>
+                        <td className="py-2">{p.notes || "N/A"}</td>
+                        <td className="py-2">
+                          <button
+                            className="text-sm text-blue-600 hover:underline cursor-pointer"
+                            onClick={() => handleEditPrescription(p)}
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </section>
@@ -265,29 +499,30 @@ const PatientState = () => {
         </div>
       </div>
 
+      {/* Prescription Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-opacity-40 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0  bg-opacity-40 z-50 flex items-center justify-center px-4">
           <form
             onSubmit={handleSavePrescription}
             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
           >
             <h2 className="text-lg font-bold mb-4 text-center text-[#299eed]">
-              {editIndex !== null
-                ? `Edit Prescription for: ${selectedDiagnosis?.name}`
-                : `Add Prescription for: ${selectedDiagnosis?.name}`}
+              {editingPrescriptionId
+                ? `Edit Prescription for: ${selectedDiagnosis?.prescription}`
+                : `Add Prescription for: ${selectedDiagnosis?.prescription}`}
             </h2>
             <div className="space-y-3">
               <input
-                name="medication"
-                placeholder="Medication"
+                name="medicationName"
+                placeholder="Medication Name"
                 required
-                value={formData.medication}
+                value={formData.medicationName}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
               />
               <input
                 name="dosage"
-                placeholder="Dosage"
+                placeholder="Dosage (e.g., 500mg)"
                 required
                 value={formData.dosage}
                 onChange={handleChange}
@@ -295,7 +530,7 @@ const PatientState = () => {
               />
               <input
                 name="frequency"
-                placeholder="Frequency"
+                placeholder="Frequency (e.g., Once Daily)"
                 required
                 value={formData.frequency}
                 onChange={handleChange}
@@ -303,77 +538,127 @@ const PatientState = () => {
               />
               <input
                 name="refills"
-                placeholder="Refills"
-                required
+                placeholder="Refills (number)"
+                type="number"
                 value={formData.refills}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
               />
-              <select
-                name="status"
-                required
-                value={formData.status}
+              <textarea
+                name="notes"
+                placeholder="Notes (optional)"
+                value={formData.notes}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
-              >
-                <option value="Active">Active</option>
-                <option value="Completed">Completed</option>
-              </select>
+                rows="3"
+              />
             </div>
             <div className="flex justify-end mt-4 space-x-2">
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingPrescriptionId(null);
+                }}
                 className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                disabled={isAddingPrescription}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#299eed] text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 bg-[#299eed] text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+                disabled={isAddingPrescription}
               >
-                Save
+                {isAddingPrescription ? "Saving..." : "Save"}
               </button>
             </div>
           </form>
         </div>
       )}
 
+      {/* Diagnosis Modal */}
       {showDiagnosisModal && (
         <div className="fixed inset-0  bg-opacity-40 z-50 flex items-center justify-center px-4">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
             <h2 className="text-lg font-bold mb-4 text-center text-[#299eed]">
               Add New Diagnosis
             </h2>
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Diagnosis Name"
-                value={newDiagnosis.name}
-                onChange={(e) => setNewDiagnosis({ ...newDiagnosis, name: e.target.value })}
-                className="w-full border rounded px-3 py-2"
-              />
-              <input
-                type="date"
-                value={newDiagnosis.date}
-                onChange={(e) => setNewDiagnosis({ ...newDiagnosis, date: e.target.value })}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-            <div className="flex justify-end mt-4 space-x-2">
-              <button
-                onClick={() => setShowDiagnosisModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddNewDiagnosis}
-                className="px-4 py-2 bg-[#299eed] text-white rounded hover:bg-blue-600"
-              >
-                Add
-              </button>
-            </div>
+            <form onSubmit={handleAddNewDiagnosis} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Diagnosis Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Diagnosis Name"
+                  required
+                  value={newDiagnosis.name}
+                  onChange={(e) => setNewDiagnosis({ ...newDiagnosis, name: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newDiagnosis.date}
+                  onChange={(e) => setNewDiagnosis({ ...newDiagnosis, date: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Instructions
+                </label>
+                <textarea
+                  placeholder="Treatment instructions"
+                  value={newDiagnosis.instructions}
+                  onChange={(e) => setNewDiagnosis({ ...newDiagnosis, instructions: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  rows="2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  placeholder="Additional notes"
+                  value={newDiagnosis.notes}
+                  onChange={(e) => setNewDiagnosis({ ...newDiagnosis, notes: e.target.value })}
+                  className="w-full border rounded px-3 py-2"
+                  rows="2"
+                />
+              </div>
+
+              <div className="flex justify-end mt-4 space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDiagnosisModal(false);
+                    setNewDiagnosis({ name: "", date: "", instructions: "", notes: "" });
+                  }}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  disabled={isAddingDiagnosis}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#299eed] text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+                  disabled={isAddingDiagnosis}
+                >
+                  {isAddingDiagnosis ? "Adding..." : "Add"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

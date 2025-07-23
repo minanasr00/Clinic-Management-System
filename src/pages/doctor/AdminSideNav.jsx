@@ -19,6 +19,7 @@ export default function AdminSideNav() {
   const location = useLocation();
   const [patients, setPatients] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPatientSlider, setShowPatientSlider] = useState(false);
 
   const routes = {
     Dashboard: "/Doctor/Dashboard",
@@ -27,7 +28,8 @@ export default function AdminSideNav() {
     Assistants: "/Doctor/AddAssistant",
     Prescriptions: "/",
   };
-  
+
+
   const activeRoute = Object.keys(routes).find(key => routes[key] === location.pathname);
 
   useEffect(() => {
@@ -83,11 +85,10 @@ export default function AdminSideNav() {
           label="Patients"
           route={routes.Patients}
           currentPath={location.pathname}
-          onClick={() => navigate(routes.Patients)}
+          onClick={() => setShowPatientSlider((prev) => !prev)}
         />
-
-        {location.pathname === routes.Patients && (
-          <div className="mt-2">
+        {showPatientSlider && (
+          <div className="mt-2 ml-6">
             <input
               type="text"
               placeholder="Search patients..."
@@ -98,8 +99,9 @@ export default function AdminSideNav() {
             <div className="overflow-x-auto flex space-x-4 mt-3 pb-2">
               {filteredPatients.map((patient, idx) => (
                 <div
-                  key={idx}
-                  className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
+                  key={patient.id || idx}
+                  onClick={() => navigate(`/doctor/PatientState/${patient.id}`)}
+                  className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform min-w-[60px]"
                 >
                   <img
                     src={patient.imgurl || "https://via.placeholder.com/48"}

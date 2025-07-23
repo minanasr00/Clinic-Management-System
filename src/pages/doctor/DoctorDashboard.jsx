@@ -23,7 +23,7 @@ const DoctorDashboard = () => {
   const [showPatientSlider, setShowPatientSlider] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -31,6 +31,7 @@ const DoctorDashboard = () => {
   useEffect(() => {
     const getPatients = async () => {
       const data = await fetchPatientsWithRole();
+      console.log("Fetched Patients:", data);
       setPatients(data);
     };
     getPatients();
@@ -47,10 +48,34 @@ const DoctorDashboard = () => {
   useEffect(() => {
     const getAppointments = async () => {
       const data = await fetchAppointments();
-      setAppointments(data);
+      console.log("Fetched Appointments:", data);
+
+      // Get today's date in Y-M-D
+      const today = new Date();
+      const todayStr = today.toLocaleDateString();
+
+      // Filter appointments to only those with today's date
+      const todaysAppointments = data.filter((appt) => {
+        const startTime = appt.start_time?.toDate?.();
+        if (!startTime) return false;
+
+        const dateStr = startTime.toLocaleDateString();
+        return dateStr === todayStr;
+      });
+
+      // Sort them by time (earliest first)
+      const sortedAppointments = todaysAppointments.sort((a, b) => {
+        const timeA = a.start_time?.toDate?.().getTime() || 0;
+        const timeB = b.start_time?.toDate?.().getTime() || 0;
+        return timeA - timeB;
+      });
+
+      setAppointments(sortedAppointments);
     };
+
     getAppointments();
   }, []);
+
 
 
   return (
@@ -71,7 +96,7 @@ const DoctorDashboard = () => {
       </div> */}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-y-auto w-screen">
+      <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Top bar for mobile */}
         <div className="md:hidden flex justify-between items-center p-4 bg-white shadow">
           <button onClick={() => setSidebarOpen(true)} className="text-xl text-gray-700">
@@ -81,7 +106,7 @@ const DoctorDashboard = () => {
           <div className="w-6" /> {/* Spacer */}
         </div>
 
-        <main className="flex-1 bg-[#f7fafc] p-4 md:p-8 w-full max-w-screen mx-auto">
+        <main className="flex-1 bg-[#f7fafc] p-4 md:p-8 w-full max-w-7xl mx-auto">
           <h1 className="text-2xl md:text-4xl font-bold mb-6">Dashboard</h1>
 
           {/* Upcoming Appointments */}
@@ -99,35 +124,45 @@ const DoctorDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {appointments.map((appt, i) => (
-                    <tr key={appt.id || i} className="border-t capitalize">
-                      <td className="p-3">{appt.patientName || "N/A"}</td>
-                      <td className="p-3">
-                        {appt.start_time?.toDate
-                          ? appt.start_time.toDate().toLocaleDateString()
-                          : "N/A"}
+                  {appointments.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-4 text-center text-gray-500">
+                        No appointments found for today.
                       </td>
-                      <td className="p-3">
-                        {appt.start_time?.toDate
-                          ? appt.start_time.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : "N/A"}
-                      </td>
-                      <td className="p-3">{appt.reason_for_visit || "General"}</td>
-                      <td
-                        className={`p-3 font-semibold ${appt.status?.toLowerCase() === "completed"
-                            ? "text-green-600"
-                            : appt.status?.toLowerCase() === "cancelled"
-                              ? "text-red-600"
-                              : appt.status?.toLowerCase() === "delayed"
-                                ? "text-yellow-600"
-                                : "text-gray-800"
-                          }`}
-                      >
-                        {appt.status || "Pending"}
-                      </td>
-
                     </tr>
-                  ))}
+                  ) : (
+                    appointments.map((appt, i) => (
+                      <tr key={appt.id || i} className="border-t capitalize">
+                        <td className="p-3">{appt.patientName || "N/A"}</td>
+                        <td className="p-3">
+                          {appt.start_time?.toDate
+                            ? appt.start_time.toDate().toLocaleDateString()
+                            : "N/A"}
+                        </td>
+                        <td className="p-3">
+                          {appt.start_time?.toDate
+                            ? appt.start_time.toDate().toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            : "N/A"}
+                        </td>
+                        <td className="p-3">{appt.reason_for_visit || "General"}</td>
+                        <td
+                          className={`p-3 font-semibold ${appt.status?.toLowerCase() === "completed"
+                              ? "text-green-600"
+                              : appt.status?.toLowerCase() === "cancelled"
+                                ? "text-red-600"
+                                : appt.status?.toLowerCase() === "delayed"
+                                  ? "text-yellow-600"
+                                  : "text-gray-800"
+                            }`}
+                        >
+                          {appt.status || "Pending"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -158,7 +193,7 @@ const DoctorDashboard = () => {
                   {filteredPatients.map((patient, idx) => (
                     <div
                       key={idx}
-                      onClick={() => navigate("/Doctor/PatientState")}
+                      onClick={() => navigate(`/Doctor/PatientState/${patient.id}`)}
                       className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform min-w-[60px]"
                     >
                       <img
@@ -180,7 +215,7 @@ const DoctorDashboard = () => {
           <section>
             <h2 className="text-lg md:text-xl font-semibold mb-4">Manage Assistants</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white shadow-2xl border border-gray-200 rounded-lg text-sm mb-4">
+              <table className="min-w-full bg-white shadow-md border border-gray-200 rounded-lg text-sm mb-4">
                 <thead className="bg-[#f7fafc] text-left text-gray-700">
                   <tr>
                     <th className="p-3">Assistant Name</th>
@@ -199,9 +234,13 @@ const DoctorDashboard = () => {
                 </tbody>
               </table>
             </div>
-            <button className="bg-[#299eed] text-white px-4 py-2 text-sm md:text-base rounded hover:bg-blue-700">
+            <button
+              onClick={() => navigate("/Doctor/AddAssistant")}
+              className="bg-[#299eed] text-white px-4 py-2 text-sm md:text-base rounded hover:bg-blue-700"
+            >
               Add Assistant
             </button>
+
           </section>
         </main>
       </div>
@@ -210,130 +249,3 @@ const DoctorDashboard = () => {
 };
 
 export default DoctorDashboard;
-
-
-
-{/* <aside
-        className={`fixed md:relative z-20 w-64 bg-[#f7fafc] text-black p-4 h-full transition-transform transform md:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex items-center justify-between md:justify-start md:space-x-3 mb-8">
-          <div className="flex items-center space-x-3">
-            <img
-              src="https://media.istockphoto.com/id/92347250/photo/portrait-of-a-doctor.jpg?s=612x612&w=0&k=20&c=yKBhDy7ch065QV8mE4ocec8n9uec9VmBDmT137ZjHFo="
-              alt="Doctor"
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <div>
-              <h2 className="font-semibold">Dr. John Doe</h2>
-              <p className="text-sm text-[#83a3b9]-300">Cardiologist</p>
-            </div>
-          </div>
-          <button
-            className="md:hidden text-xl text-gray-600"
-            onClick={() => setSidebarOpen(false)}
-          >
-            ✕
-          </button>
-        </div>
-
-        <nav className="space-y-4">
-          <SidebarItem
-            icon={<FaTachometerAlt />}
-            label="Dashboard"
-            activeItem={activeItem}
-            setActiveItem={setActiveItem}
-            onClick={() => {
-              if (location.pathname !== "/doctor/DoctorDashboard") {
-                navigate("/doctor/DoctorDashboard");
-              }
-            }}
-          />
-          <SidebarItem
-            icon={<FaCalendarAlt />}
-            label="Appointments"
-            activeItem={activeItem}
-            setActiveItem={setActiveItem}
-            onClick={() => {
-              if (location.pathname !== "/AppointmentsPage") {
-                navigate("/AppointmentsPage");
-              }
-            }}
-          />
-
-          {/* Patients Section */}
-//     <div className="space-y-2">
-//       <SidebarItem
-//         icon={<FaUserInjured />}
-//         label="Patients"
-//         activeItem={activeItem}
-//         setActiveItem={setActiveItem}
-//         onClick={() => {}}
-//       />
-
-//       {activeItem === "Patients" && (
-//         <>
-//           <div className="mt-2">
-//             <input
-//               type="text"
-//               placeholder="Search patients..."
-//               value={searchQuery}
-//               onChange={(e) => setSearchQuery(e.target.value)}
-//               className="w-full px-3 py-2 text-sm rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
-//             />
-//           </div>
-
-//           <div className="overflow-x-auto flex space-x-4 mt-3 pb-2">
-//             {filteredPatients.map((patient, idx) => (
-//               <div
-//                 key={idx}
-//                 onClick={() => navigate("/doctor/PatientState")}
-//                 className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
-//               >
-//                 <img
-//                   src={patient.img}
-//                   alt={patient.name}
-//                   className="w-12 h-12 rounded-full object-cover"
-//                 />
-//                 <span className="text-xs mt-1">{patient.name}</span>
-//               </div>
-//             ))}
-//           </div>
-//         </>
-//       )}
-//     </div>
-
-//     <SidebarItem
-//       icon={<FaUserNurse />}
-//       label="Assistants"
-//       activeItem={activeItem}
-//       setActiveItem={setActiveItem}
-//       onClick={() => {
-//         if (location.pathname !== "/AddAssistantPage") {
-//           navigate("/AddAssistantPage");
-//         }
-//       }}
-//     />
-//     <SidebarItem
-//       icon={<FaFilePrescription />}
-//       label="Prescriptions"
-//       activeItem={activeItem}
-//       setActiveItem={setActiveItem}
-//       onClick={() => {
-//         if (location.pathname !== "/") {
-//           navigate("/");
-//         }
-//       }}
-//     />
-//     <button
-//       onClick={() => {
-//         handleSignOut();
-//         navigate("/");
-//       }}
-//       className="bg-red-700 w-full text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors"
-//     >
-//       Sign Out
-//     </button>
-//   </nav>
-// </aside> */}

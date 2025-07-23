@@ -1,5 +1,5 @@
 import { Outlet } from "react-router"
-import AdminSideNav from "./AdminSideNav"
+import AdminSideNav from "../doctor/AdminSideNav"
 
 function DoctorLayout() {
     return (

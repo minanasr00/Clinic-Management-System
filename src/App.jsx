@@ -49,7 +49,7 @@ const routes = [
       { path: "/doctor/Dashboard", element: <DoctorDashboard></DoctorDashboard> },
       { path: "AppointmentsPage", element: <AppointmentsPage></AppointmentsPage> },
       { path: "AddAssistant", element: <AddAssistantPage></AddAssistantPage> },
-      { path: 'PatientState', element: <PatientState></PatientState> }
+      { path: 'PatientState/:patientId', element: <PatientState /> }
     ]
   },
   {
