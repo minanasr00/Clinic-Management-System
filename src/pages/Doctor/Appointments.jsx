@@ -1,47 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LuChevronLeft, LuChevronRight, LuPlus, LuSearch, LuCalendar } from 'react-icons/lu';
-
-import AdminNav from './AdminNav';
 import { fetchAppointments } from '../../services/firebase/appointmentsServiceDoctor';
 
-const appointments = await fetchAppointments();
-console.log(appointments); // Log appointments to verify data fetching
- // Fetch appointments from the service
-
 export default function AppointmentsPage() {
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 9, 26)); // October 26, 2024
-  const [selectedDate, setSelectedDate] = useState(26);
-  // const [view, setView] = useState('calendar'); // 'calendar' or 'list'
+  const [currentDate, setCurrentDate] = useState(new Date()); 
+  const [selectedDate, setSelectedDate] = useState(new Date()); // Default to today's date
+  const [appointments, setAppointments] = useState([]); // State to hold appointments
 
-  // [
-  //   {
-  //     id: 1,
-  //     time: '9:00',
-  //     patient: 'Liam Carter',
-  //     type: 'Routine Checkup',
-  //     status: 'confirmed'
-  //   },
-  //   {
-  //     id: 2,
-  //     time: '10:30',
-  //     patient: 'Olivia Bennett',
-  //     type: 'Follow-up',
-  //     status: 'confirmed'
-  //   },
-  //   {
-  //     id: 3,
-  //     time: '1:00',
-  //     patient: 'Noah Thompson',
-  //     type: 'Consultation',
-  //     status: 'pending'
-  //   }
-  // ];
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetchedAppointments = await fetchAppointments();
+      setAppointments(fetchedAppointments);
+    };
+    fetchData();
+  }, []);
 
+  const filteredAppointments = appointments.filter(appointment => {
+  if (!appointment.start_time) return false; // Skip if start_time is not defined
+  // Convert Firestore timestamp to JavaScript Date object
+  const appointmentDate = appointment.start_time.toDate();
+  return appointmentDate.getFullYear() === selectedDate.getFullYear() &&
+        appointmentDate.getMonth() === selectedDate.getMonth() &&
+        appointmentDate.getDate() === selectedDate.getDate();
+});
+  
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
-
+  
+  
   const navigateMonth = (direction) => {
     const newDate = new Date(currentDate);
     newDate.setMonth(currentDate.getMonth() + direction);
@@ -68,13 +56,20 @@ export default function AppointmentsPage() {
 
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const isSelected = day === selectedDate;
-      const isToday = day === 26; // Highlighting Oct 26 as today
-      
+      const isSelected = selectedDate.getDate() === day &&
+        selectedDate.getMonth() === currentDate.getMonth() &&
+        selectedDate.getFullYear() === currentDate.getFullYear();
+      const isToday = day === new Date().getDate() &&
+        new Date().getMonth() === currentDate.getMonth() &&
+        new Date().getFullYear() === currentDate.getFullYear(); // Highlighting today's date
+
       days.push(
         <div
           key={day}
-          onClick={() => setSelectedDate(day)}
+          onClick={() => {
+            const newSelectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+            setSelectedDate(newSelectedDate);
+          }}
           className={`h-10 w-10 flex items-center justify-center cursor-pointer rounded-md text-sm font-medium transition-colors ${
             isSelected 
               ? 'bg-blue-600 text-white' 
@@ -93,7 +88,6 @@ export default function AppointmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <AdminNav /> */}
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
@@ -119,32 +113,6 @@ export default function AppointmentsPage() {
                   />
                 </div>
               </div>
-
-              {/* View Toggle */}
-              {/* <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setView('calendar')}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      view === 'calendar' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    Calendar
-                  </button>
-                  <button
-                    onClick={() => setView('list')}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      view === 'list' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    List
-                  </button>
-                </div>
-              </div> */}
 
               {/* Calendar */}
               <div className="mb-6">
@@ -179,11 +147,11 @@ export default function AppointmentsPage() {
           <div className="lg:col-span-1 h-screen max-h-180 overflow-y-auto">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Appointments for Oct {selectedDate}, 2024
+                Appointments for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </h3>
               
               <div className="space-y-4">
-                {appointments.map((appointment) => (
+                {filteredAppointments.map((appointment) => (
                   <div key={appointment.id} className="border-l-4 border-blue-500 pl-4 py-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-gray-900">{appointment.start_time.toDate().toLocaleString()}</span>
