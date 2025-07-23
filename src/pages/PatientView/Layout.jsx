@@ -13,7 +13,7 @@ export default function Layout() {
   const ref = useRef(null)
   const navigate = useNavigate()
     return <>
-        <header className="bg-white shadow-sm px-6 py-4 text-[#0F141A]">
+        <header className=" bg-white shadow-sm px-6 py-4 text-[#0F141A]">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                   <div className="flex items-center space-x-1">
                     <div className="w-8 h-8 bg-[#0F141A] rounded-full flex items-center justify-center">
