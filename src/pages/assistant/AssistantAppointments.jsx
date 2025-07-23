@@ -8,6 +8,7 @@ import {
 import Sidebar from "../../components/Sidebar";
 import CustomCalendar from "./CustomCalendar";
 import { AuthContext } from "../../context/Authcontext";
+import { fetchAllPatients } from "../../services/firebase/AssistantpatientsServices";
 
 const TIME_SLOTS = [
   "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
@@ -35,6 +36,9 @@ export default function AssistantAppointments() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [assistantId, setAssistantId] = useState(null);
+  const [patientName, setPatientName] = useState(""); // جديد
+  const [patients, setPatients] = useState([]); // بدلًا من استخدام patientName لهذا الغرض
+
 
   useEffect(() => {
     if (user) {
@@ -42,16 +46,27 @@ export default function AssistantAppointments() {
     }
   }, [user]);
 
-  const fetchAppointments = async () => {
+  
+
+ useEffect(() => {
+  const getPatients = async () => {
+    const data = await fetchAllPatients();
+    setPatients(data); // ✅ صح الآن
+  };
+  getPatients();
+}, []);
+
+useEffect(() => {
+  fetchAppointments();
+}, []);
+
+const fetchAppointments = async () => {
     const data = await getAllAppointmentsForTable();
     setAppointments(data);
   };
-
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
-
   const resetForm = () => {
+    setPatientName("");
+    setPatients([]);
     setPatientId("");
     setSelectedDate("");
     setSelectedTime("");
@@ -64,25 +79,29 @@ export default function AssistantAppointments() {
   };
 
   const handleSubmit = async () => {
-    if (!patientId || !selectedDate || !selectedTime || !assistantId) {
-      return alert("Please fill all fields");
-    }
+    if (!selectedDate || !selectedTime || !assistantId || (!patientName && !patientId)) {
+  return alert("Please fill all required fields: date, time, and either select or enter a patient name.");
+}
+
     if (!paymentAmount || !paymentMethod) {
       return alert("Please enter payment details using the Payment button");
     }
 
+
     const appointment = {
-      assistant: assistantId,
-      doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
-      patient_id: patientId,
-      payment_amount: Number(paymentAmount),
-      payment_method: paymentMethod,
-      payment_status: "pending",
-      reason_for_visit: reason,
-      start_time: new Date(`${selectedDate} ${selectedTime}`),
-      status,
-      booked_by: "assistant",
-    };
+  assistant: assistantId,
+  doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
+  patient_id: patientId || "custom-" + Date.now(), // إذا لم يُختر من القائمة
+  patient_name: patientName,
+  payment_amount: Number(paymentAmount),
+  payment_method: paymentMethod,
+  payment_status: "pending",
+  reason_for_visit: reason,
+  start_time: new Date(`${selectedDate} ${selectedTime}`),
+  status,
+  booked_by: "assistant",
+};
+
 
     if (editId) {
       await updateAppointmentInFirestore(editId, appointment);
@@ -257,13 +276,37 @@ export default function AssistantAppointments() {
                 <strong>Hospital:</strong> Barala Hospital
               </p>
               <label className="block mb-2 font-semibold">Patient Name</label>
-              <input
-                type="text"
-                placeholder="Enter Patient Full Name"
-                value={patientId}
-                onChange={(e) => setPatientId(e.target.value)}
-                className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
-              />
+<input
+  type="text"
+  placeholder="Enter Patient Full Name"
+  value={patientName}
+  onChange={(e) => setPatientName(e.target.value)}
+  className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
+/>
+
+<label className="block mb-2 font-semibold">Select Patient</label>
+<select
+  onChange={(e) => {
+    const selectedId = e.target.value;
+    setPatientId(selectedId);
+    const selectedPatient = patients.find((p) => p.id === selectedId);
+    if (selectedPatient) {
+      setPatientName(
+        selectedPatient.fullName || selectedPatient.name || selectedPatient.email
+      );
+    }
+  }}
+  className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
+>
+  <option value="">-- Choose a patient --</option>
+  {patients.map((patient) => (
+    <option key={patient.id} value={patient.id}>
+      {patient.fullName || patient.name || patient.email} - {patient.id}
+    </option>
+  ))}
+</select>
+
+
 
               <label className="block mb-2 font-semibold">Appointment Time</label>
               <div className="grid grid-cols-4 gap-2 max-h-64 mb-30">
@@ -305,6 +348,7 @@ export default function AssistantAppointments() {
             <thead className="bg-gray-50">
   <tr>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient Name</th>
+    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -320,7 +364,8 @@ export default function AssistantAppointments() {
 
     return (
       <tr key={appt.id}>
-        <td className="px-6 py-4 text-sm">{appt.patient_id}</td>
+        <td className="px-6 py-4 text-sm text-gray-800">{appt.patient_name }</td>
+        <td className="px-6 py-4 text-sm text-gray-800">{appt.patient_id}</td>
         <td className="px-6 py-4 text-sm  text-sky-600">{formattedDate}</td>
         <td className="px-6 py-4 text-sm text-sky-600">{formattedTime}</td>
         <td className="px-6 py-4 text-sm">
