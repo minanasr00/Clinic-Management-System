@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { FiMessageCircle } from "react-icons/fi"; 
 import { handleSignOut } from "../services/firebase/auth";
+import { useContext } from "react";
+import { AuthContext } from './../context/Authcontext';
 
 const links = [
   { to: "/assistant/dashboard", label: "Dashboard", icon: <Home size={20} /> },
@@ -26,6 +28,7 @@ const links = [
 
 const Sidebar = () => {
   const navigate = useNavigate()
+  const { user } = useContext(AuthContext); 
   return (
     
     <aside className="h-screen w-64 bg-white border-r border-gray-200
@@ -34,13 +37,12 @@ const Sidebar = () => {
       {/* Profile Section */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <img
-            src="https://i.pravatar.cc/100?img=47"
-            alt="Sarah Miller"
-            className="w-12 h-12 rounded-full"
-          />
+          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+            {user?.displayName?.charAt(0).toUpperCase()}
+            {user?.displayName?.charAt(1).toUpperCase()}
+          </div>
           <div>
-            <p className="font-semibold text-base">Sarah Miller</p>
+            <p className="font-semibold text-base">{user?.displayName || "unknown"}</p>
             <p className="text-sm text-gray-400">Assistant</p>
           </div>
         </div>
