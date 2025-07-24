@@ -79,7 +79,9 @@ const Dashboard = () => {
     setUnreadMessages(msgsWithSenderNames);
     setShowUnreadTable(true);
   }
-
+if(key=='patients'){
+  window.location.href='/assistant/Patients'
+}
 if (key === "unreadChats") {
   setShowUpcomingTable(false);
   setShowConfirmedTable(false);
