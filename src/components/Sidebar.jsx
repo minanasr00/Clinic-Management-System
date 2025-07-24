@@ -20,7 +20,7 @@ const links = [
     label: "Messages",
     icon: <FiMessageCircle size={20} strokeWidth={2} />,
   },
-  { to: "/billing", label: "Billing", icon: <CreditCard size={20} /> },
+  
   { to: "/settings", label: "Settings", icon: <Settings size={20} /> },
 ];
 
@@ -44,7 +44,13 @@ const Sidebar = () => {
             <p className="text-sm text-gray-400">Assistant</p>
           </div>
         </div>
-        <button className="text-gray-500 hover:text-black transition">
+        <button onClick={() => {
+                        
+                        handleSignOut()
+                        navigate("/")
+                      }}
+        className="text-gray-500 hover:text-black transition">
+          
           <LogOut size={16} />
         </button>
       </div>
@@ -67,13 +73,13 @@ const Sidebar = () => {
             <span>{label}</span>
           </NavLink>
         ))}
-         <button onClick={() => {
+         {/* <button onClick={() => {
                         
                         handleSignOut()
                         navigate("/")
                       }} className='bg-red-700 text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
                               sign Out
-                            </button>
+                            </button> */}
       </nav>
     </aside>
   );

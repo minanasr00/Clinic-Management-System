@@ -62,7 +62,7 @@ export default function Patients() {
         {/* Left: Patient List */}
         <div className="w-1/2">
           <h1 className="text-2xl font-semibold text-gray-800">Patient Records</h1>
-          <p className="text-gray-500 mb-6">
+          <p className="text-sky-700 my-3">
             Search for a patient to view their history and manage their records.
           </p>
           <input
@@ -124,7 +124,7 @@ export default function Patients() {
                 />
                 <div>
                   <h3 className="font-semibold">{selectedPatient.name}</h3>
-                  <p className="text-gray-500 text-sm">ID: {selectedPatient.id}</p>
+                  <p className="text-sky-700 text-sm">ID: {selectedPatient.id}</p>
                 </div>
               </div>
 
@@ -148,7 +148,8 @@ export default function Patients() {
               {/* Overview */}
               {activeTab === "overview" && (
                 <div className="text-gray-700 mb-10 space-y-2">
-                  <p className="text-lg font-semibold">{selectedPatient.name}</p>
+                  <p className="">
+                    <span className="font-medium">Name: </span>{selectedPatient.name}</p>
                   <p>
                     <span className="font-medium">Email:</span> {selectedPatient.email}
                   </p>
