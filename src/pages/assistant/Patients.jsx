@@ -20,7 +20,7 @@ const DEFAULT_IMAGES = [
 
 export default function Patients() {
   const [activeTab, setActiveTab] = useState("history");
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  // const [uploadedFiles, setUploadedFiles] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState([]);
@@ -34,15 +34,14 @@ export default function Patients() {
     fetchPatients();
   }, []);
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setUploadedFiles(files);
-  };
+  // const handleFileChange = (e) => {
+  //   const files = Array.from(e.target.files);
+  //   setUploadedFiles(files);
+  // };
 
   const tabs = [
     { name: "Overview", key: "overview" },
     { name: "History", key: "history" },
-    { name: "Files", key: "files" },
   ];
 
   const filteredPatients = patients.filter((p) =>
@@ -82,7 +81,7 @@ export default function Patients() {
                   onClick={() => {
                     setSelectedPatient(patient);
                     setActiveTab("history");
-                    setUploadedFiles([]);
+                    // setUploadedFiles([]);
                   }}
                 >
                   <img
@@ -192,7 +191,7 @@ export default function Patients() {
               )}
 
               {/* Files */}
-              {activeTab === "files" && (
+              {/* {activeTab === "files" && (
                 <div>
                   <h2 className="text-lg font-semibold mb-2">Files</h2>
 
@@ -221,7 +220,7 @@ export default function Patients() {
                     </label>
                   </div>
                 </div>
-              )}
+              )} */}
             </>
           ) : (
             <div className="text-gray-400 text-xl mt-10">
