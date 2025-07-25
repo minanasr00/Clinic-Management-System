@@ -98,37 +98,116 @@ const isExistingPatientSelected = !!patientId;
     
   };
 
-  const handleSubmit = async () => {
-  if (!selectedDate || !selectedTime || (!patientName && !patientId)) {
-    setFormError("Please fill all required fields: date, time, and either select or enter a patient name.");
+//   const handleSubmit = async () => {
+//   if (!selectedDate || !selectedTime || (!patientName && !patientId)) {
+//     setFormError("Please fill all required fields: date, time, and either select or enter a patient name.");
+//     return;
+//   }
+
+//   if (!paymentAmount || !paymentMethod) {
+//     setFormError("Please enter payment details using the Payment section.");
+//     return;
+//   }
+
+
+//   const appointment = {
+//   assistant: assistantId,
+//   doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
+//   patient_id: patientId || "custom-" + Date.now(),
+//   patient_name: patientName,
+//   patient_phone: phone,
+//   patient_age: birthDate ? new Date().getFullYear() - new Date(birthDate).getFullYear() : "",
+//   patient_gender: gender,
+//   payment_amount: Number(paymentAmount),
+//   payment_method: paymentMethod,
+//   payment_status: paymentStatus,
+//   start_time: new Date(`${selectedDate} ${selectedTime}`),
+//   status: status,
+//   booked_by: "assistant",
+//   visit_type: visitType, 
+// };
+
+
+
+//     if (editId) {
+//       await updateAppointmentInFirestore(editId, appointment);
+//       setSuccessMessage("Appointment updated successfully!");
+//     } else {
+//       await addAppointmentToFirestore(appointment);
+//       setSuccessMessage("Appointment booked successfully!");
+//     }
+
+//     fetchAppointments();
+//     resetForm();
+//     setShowForm(false);
+//     setTimeout(() => setSuccessMessage(""), 3000);
+//   };
+const handleSubmit = async () => {
+  // Reset previous error
+  setFormError("");
+
+  // Validation checks
+  if (!selectedDate || !selectedTime) {
+    setFormError("Please select a date and time.");
     return;
   }
 
-  if (!paymentAmount || !paymentMethod) {
-    setFormError("Please enter payment details using the Payment section.");
+  if (!patientId && !patientName) {
+    setFormError("Please select an existing patient or enter a new patient name.");
     return;
   }
 
+  if (!visitType) {
+    setFormError("Please choose a visit type.");
+    return;
+  }
 
+  if (!status) {
+    setFormError("Please choose an appointment status.");
+    return;
+  }
+
+  if (!paymentMethod || !paymentAmount || !paymentStatus) {
+    setFormError("Please complete all payment information.");
+    return;
+  }
+
+  if (!patientId) {
+    // Validation for new patient details
+    if (!phone || !birthDate || !gender) {
+      setFormError("Please enter phone, birth date, and gender for the new patient.");
+      return;
+    }
+
+    // Validate phone format (digits only, 8-15 length)
+    const phoneRegex = /^[0-9]{8,15}$/;
+    if (!phoneRegex.test(phone)) {
+      setFormError("Please enter a valid phone number (8–15 digits).");
+      return;
+    }
+  }
+
+  // All good – prepare appointment object
   const appointment = {
-  assistant: assistantId,
-  doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
-  patient_id: patientId || "custom-" + Date.now(),
-  patient_name: patientName,
-  patient_phone: phone,
-  patient_age: birthDate ? new Date().getFullYear() - new Date(birthDate).getFullYear() : "",
-  patient_gender: gender,
-  payment_amount: Number(paymentAmount),
-  payment_method: paymentMethod,
-  payment_status: paymentStatus,
-  start_time: new Date(`${selectedDate} ${selectedTime}`),
-  status: status,
-  booked_by: "assistant",
-  visit_type: visitType, 
-};
+    assistant: assistantId,
+    doctor_id: "IP5k3oM6YRUs0yCzmTIBQMAg0Um1",
+    patient_id: patientId || "custom-" + Date.now(),
+    patient_name: patientName,
+    patient_phone: phone,
+    patient_age: birthDate
+      ? new Date().getFullYear() - new Date(birthDate).getFullYear()
+      : "",
+    patient_gender: gender,
+    payment_amount: Number(paymentAmount),
+    payment_method: paymentMethod,
+    payment_status: paymentStatus,
+    start_time: new Date(`${selectedDate} ${selectedTime}`),
+    status: status,
+    booked_by: "assistant",
+    visit_type: visitType,
+  };
 
-
-
+  try {
     if (editId) {
       await updateAppointmentInFirestore(editId, appointment);
       setSuccessMessage("Appointment updated successfully!");
@@ -141,7 +220,11 @@ const isExistingPatientSelected = !!patientId;
     resetForm();
     setShowForm(false);
     setTimeout(() => setSuccessMessage(""), 3000);
-  };
+  } catch (error) {
+    console.error("Error saving appointment:", error);
+    setFormError("Something went wrong. Please try again.");
+  }
+};
 
   const toTimeSlotFormat = (dateObj) => {
     const hours = dateObj.getHours();
