@@ -20,7 +20,7 @@ const DEFAULT_IMAGES = [
 
 export default function Patients() {
   const [activeTab, setActiveTab] = useState("history");
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  // const [uploadedFiles, setUploadedFiles] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState([]);
@@ -34,15 +34,14 @@ export default function Patients() {
     fetchPatients();
   }, []);
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setUploadedFiles(files);
-  };
+  // const handleFileChange = (e) => {
+  //   const files = Array.from(e.target.files);
+  //   setUploadedFiles(files);
+  // };
 
   const tabs = [
     { name: "Overview", key: "overview" },
     { name: "History", key: "history" },
-    { name: "Files", key: "files" },
   ];
 
   const filteredPatients = patients.filter((p) =>
@@ -62,7 +61,7 @@ export default function Patients() {
         {/* Left: Patient List */}
         <div className="w-1/2">
           <h1 className="text-2xl font-semibold text-gray-800">Patient Records</h1>
-          <p className="text-gray-500 mb-6">
+          <p className="text-sky-700 my-3">
             Search for a patient to view their history and manage their records.
           </p>
           <input
@@ -82,7 +81,7 @@ export default function Patients() {
                   onClick={() => {
                     setSelectedPatient(patient);
                     setActiveTab("history");
-                    setUploadedFiles([]);
+                    // setUploadedFiles([]);
                   }}
                 >
                   <img
@@ -124,7 +123,7 @@ export default function Patients() {
                 />
                 <div>
                   <h3 className="font-semibold">{selectedPatient.name}</h3>
-                  <p className="text-gray-500 text-sm">ID: {selectedPatient.id}</p>
+                  <p className="text-sky-700 text-sm">ID: {selectedPatient.id}</p>
                 </div>
               </div>
 
@@ -148,7 +147,8 @@ export default function Patients() {
               {/* Overview */}
               {activeTab === "overview" && (
                 <div className="text-gray-700 mb-10 space-y-2">
-                  <p className="text-lg font-semibold">{selectedPatient.name}</p>
+                  <p className="">
+                    <span className="font-medium">Name: </span>{selectedPatient.name}</p>
                   <p>
                     <span className="font-medium">Email:</span> {selectedPatient.email}
                   </p>
@@ -191,7 +191,7 @@ export default function Patients() {
               )}
 
               {/* Files */}
-              {activeTab === "files" && (
+              {/* {activeTab === "files" && (
                 <div>
                   <h2 className="text-lg font-semibold mb-2">Files</h2>
 
@@ -220,7 +220,7 @@ export default function Patients() {
                     </label>
                   </div>
                 </div>
-              )}
+              )} */}
             </>
           ) : (
             <div className="text-gray-400 text-xl mt-10">

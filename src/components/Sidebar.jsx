@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { FiMessageCircle } from "react-icons/fi"; 
 import { handleSignOut } from "../services/firebase/auth";
+import { useContext } from "react";
+import { AuthContext } from './../context/Authcontext';
 
 const links = [
   { to: "/assistant/dashboard", label: "Dashboard", icon: <Home size={20} /> },
@@ -20,12 +22,13 @@ const links = [
     label: "Messages",
     icon: <FiMessageCircle size={20} strokeWidth={2} />,
   },
-  { to: "/billing", label: "Billing", icon: <CreditCard size={20} /> },
+  
   { to: "/settings", label: "Settings", icon: <Settings size={20} /> },
 ];
 
 const Sidebar = () => {
   const navigate = useNavigate()
+  const { user } = useContext(AuthContext); 
   return (
     
     <aside className="h-screen w-64 bg-white border-r border-gray-200
@@ -34,17 +37,22 @@ const Sidebar = () => {
       {/* Profile Section */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <img
-            src="https://i.pravatar.cc/100?img=47"
-            alt="Sarah Miller"
-            className="w-12 h-12 rounded-full"
-          />
+          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+            {user?.displayName?.charAt(0).toUpperCase()}
+            {user?.displayName?.charAt(1).toUpperCase()}
+          </div>
           <div>
-            <p className="font-semibold text-base">Sarah Miller</p>
+            <p className="font-semibold text-base">{user?.displayName || "unknown"}</p>
             <p className="text-sm text-gray-400">Assistant</p>
           </div>
         </div>
-        <button className="text-gray-500 hover:text-black transition">
+        <button onClick={() => {
+                        
+                        handleSignOut()
+                        navigate("/")
+                      }}
+        className="text-gray-500 hover:text-black transition">
+          
           <LogOut size={16} />
         </button>
       </div>
@@ -67,13 +75,13 @@ const Sidebar = () => {
             <span>{label}</span>
           </NavLink>
         ))}
-         <button onClick={() => {
+         {/* <button onClick={() => {
                         
                         handleSignOut()
                         navigate("/")
                       }} className='bg-red-700 text-white font-medium px-4 py-2 rounded-lg hover:bg-red-800 transition-colors'>
                               sign Out
-                            </button>
+                            </button> */}
       </nav>
     </aside>
   );

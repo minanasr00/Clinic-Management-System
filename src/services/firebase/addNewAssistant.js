@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "./config";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
@@ -16,7 +16,9 @@ export async function addAssistantUser  ( {name, email, password, phoneNumber} )
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-  
+   await updateProfile(user, {
+      displayName: name,
+    });
     return { success: true };
   } catch (error) {
     console.error("Error adding assistant user:", error);

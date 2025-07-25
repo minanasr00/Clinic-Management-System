@@ -579,7 +579,7 @@ export default function AppointmentPage() {
         setTimeout(() => {
           setAppointmentConfirmed(false);
           reset();
-          navigate('/Book Appointment'); // Redirect to appointments page
+          navigate('/patient/Book Appointment'); // Redirect to appointments page
         }, 3000);
       }
     } catch (error) {
