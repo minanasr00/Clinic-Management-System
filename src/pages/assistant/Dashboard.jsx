@@ -83,11 +83,15 @@ if(key=='patients'){
   window.location.href='/assistant/Patients'
 }
 if (key === "unreadChats") {
-  setShowUpcomingTable(false);
-  setShowConfirmedTable(false);
-  const msgs = await getAllUnreadMessagesForUser(user.uid);
-  setUnreadMessages(msgs);
-  setShowUnreadTable(true);
+
+  window.location.href='/assistant/messages'
+
+
+  // setShowUpcomingTable(false);
+  // setShowConfirmedTable(false);
+  // const msgs = await getAllUnreadMessagesForUser(user.uid);
+  // setUnreadMessages(msgs);
+  // setShowUnreadTable(true);
 }
 
     if (key === "upcoming") {

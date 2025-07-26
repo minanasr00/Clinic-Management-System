@@ -128,7 +128,7 @@ const DoctorDashboard = () => {
                   ) : (
                     appointments.map((appt, i) => (
                       <tr key={appt.id || i} className="border-t capitalize">
-                        <td className="p-3">{appt.patientName || "N/A"}</td>
+                        <td className="p-3">{appt.patient_name || "N/A"}</td>
                         <td className="p-3">
                           {appt.start_time?.toDate
                             ? appt.start_time.toDate().toLocaleDateString()
