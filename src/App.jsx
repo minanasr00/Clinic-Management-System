@@ -14,7 +14,7 @@ import MedicalHistory from './pages/PatientView/MedicalHistory/MedicalHistory';
 import Payment from './pages/PatientView/Payment/Payment';
 import BookAppointment from './pages/PatientView/BookAppointment/BookAppointment';
 import Authgaurd from './components/Authgaurd';
-import LogRegGaurd from './components/logRegGaurd';
+import LogRegGaurd from './components/LogRegGaurd';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import AppointmentsPage from './pages/Doctor/Appointments';
 import AddAssistantPage from './pages/Doctor/AddNewAssistant';
