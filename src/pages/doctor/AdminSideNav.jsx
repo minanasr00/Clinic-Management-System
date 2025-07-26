@@ -9,9 +9,7 @@ import {
 import { handleSignOut } from "../../services/firebase/auth";
 import { fetchPatientsWithRole } from "../../services/firebase/patientServiceDoctor";
 import { useEffect, useState } from "react";
-import { db } from "../../services/firebase/config";
-import { collection, getDocs } from "firebase/firestore";
-import doctorimg from "../../assets/istockphoto-92347250-612x612.jpg";
+import doctorimg from "/arak-dental-logo.jpeg";
 import AppointmentsPage from './Appointments';
 
 export default function AdminSideNav() {
@@ -56,8 +54,8 @@ export default function AdminSideNav() {
           className="w-12 h-12 rounded-full object-cover"
         />
         <div>
-          <h2 className="font-semibold">Dr. John Doe</h2>
-          <p className="text-sm text-[#83a3b9]-300">Cardiologist</p>
+          <h2 className="font-semibold text-sm">Dr. Muhamad Mahmoud</h2>
+          <p className="text-sm text-[#83a3b9]-300">Arak Dental Clinic</p>
         </div>
       </div>
 

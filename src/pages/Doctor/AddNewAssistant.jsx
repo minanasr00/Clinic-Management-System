@@ -3,8 +3,11 @@ import { useForm } from 'react-hook-form';
 import { LuEyeOff, LuEye } from 'react-icons/lu';
 import { addAssistantUser } from '../../services/firebase/addNewAssistant';
 import toast from 'react-hot-toast';
+import { FaBars } from 'react-icons/fa';
+import AdminSideNav from './AdminSideNav';
 
 export default function AddAssistantPage() {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -48,11 +51,32 @@ export default function AddAssistantPage() {
 
   return (
     <div className=" bg-gray-50">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <>
+            <div
+            className="fixed inset-0 bg-black opacity-40 z-40"
+            onClick={() => setSidebarOpen(false)}
+            />
+            <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
+            <AdminSideNav />
+            </div>
+        </>
+      )}
       {/* Main Content */}
-      <main className="max-w-3xl mx-auto py-12 sm:px-6 lg:px-8 min-h-screen">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-screen mx-autoflex-1 flex flex-col overflow-y-auto">
+        {/* Top bar for mobile */}
+        <div className="md:hidden flex justify-between items-center p-4 bg-white shadow fixed top-0 left-0 right-0 z-40">
+          <button onClick={() => setSidebarOpen(true)} className="text-xl text-gray-700">
+            <FaBars />
+          </button>
+          <h1 className="text-xl font-bold text-[#299eed]">Add a New Assistant</h1>
+          <div className="w-6" /> {/* Spacer */}
+        </div>
+      <main className=" pt-24  pb-12 sm:px-6 lg:px-8 h-screen overflow-y-auto">
+        <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Add a New Assistant</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">New Assistant</h1>
             <p className="text-gray-600">Create an account for a new assistant to join your team</p>
           </div>
           <div className="space-y-6">
@@ -210,6 +234,7 @@ export default function AddAssistantPage() {
             </div>
             </div>
       </main>
+      </div>
     </div>
   );
 }

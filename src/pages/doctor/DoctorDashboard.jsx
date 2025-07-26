@@ -7,14 +7,12 @@ import {
   FaUserNurse,
   FaFilePrescription,
 } from "react-icons/fa";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate } from "react-router";
 import { fetchPatientsWithRole } from "../../services/firebase/patientServiceDoctor";
 import { fetchAppointments } from "../../services/firebase/appointmentsServiceDoctor";
-import { handleSignOut } from "../../services/firebase/auth";
 import AdminSideNav from "./AdminSideNav";
 
 const DoctorDashboard = () => {
-  const [activeItem, setActiveItem] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [appointments, setAppointments] = useState([]);
@@ -22,7 +20,7 @@ const DoctorDashboard = () => {
   const [assistants, setAssistants] = useState([]);
   const [showPatientSlider, setShowPatientSlider] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
+
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -79,35 +77,32 @@ const DoctorDashboard = () => {
 
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
+    <div className="flex md:flex-row h-screen p-4 md:p-8">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-opacity-50 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <>
+            <div
+            className="fixed inset-0 bg-black opacity-40 z-40"
+            onClick={() => setSidebarOpen(false)}
+            />
+            <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
+            <AdminSideNav />
+            </div>
+        </>
       )}
-
-      {/* Sidebar
-      <div
-        className={`z-50 md:block ${sidebarOpen ? "block fixed bg-white w-64 h-full" : "hidden"}`}
-      >
-        <AdminSideNav />
-      </div> */}
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Top bar for mobile */}
-        <div className="md:hidden flex justify-between items-center p-4 bg-white shadow">
+        <div className="md:hidden flex justify-between items-center p-4 bg-white shadow fixed top-0 left-0 right-0 z-40">
           <button onClick={() => setSidebarOpen(true)} className="text-xl text-gray-700">
             <FaBars />
           </button>
-          <h1 className="text-xl font-bold">Dashboard</h1>
+          <h1 className="text-xl font-bold text-[#299eed]">Dashboard</h1>
           <div className="w-6" /> {/* Spacer */}
         </div>
 
-        <main className="flex-1 bg-[#f7fafc] p-4 md:p-8 w-full max-w-7xl mx-auto">
-          <h1 className="text-2xl md:text-4xl font-bold mb-6">Dashboard</h1>
+        <main className="flex-1 bg-[#f7fafc]  w-full max-w-screen mx-auto">
+          <h1 className="text-2xl md:text-4xl font-bold mb-6 pl-3">Dashboard</h1>
 
           {/* Upcoming Appointments */}
           <section className="mb-10">

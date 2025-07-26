@@ -25,7 +25,7 @@ import AssistantLayout from './pages/assistant/AssistantLayout';
 import Patients from './pages/assistant/Patients';
 import Messages from './pages/assistant/AssistantChat';
 import { Toaster } from 'react-hot-toast';
-import DoctorLayout from './pages/Doctor/doctorLayout';
+import DoctorLayout from './pages/Doctor/DoctorLayout';
 import PaymentSuccess from './pages/PatientView/PaymentSuccess/PaymentSuccess';
 import { PaymentProvider } from './context/PaymentContext';
 import PatientChat from './pages/PatientView/patientchat/patientchat';

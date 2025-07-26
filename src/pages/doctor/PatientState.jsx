@@ -10,10 +10,9 @@ import {
   updatePrescriptionMedication
 } from "../../services/firebase/medicationsService";
 import { FaBell, FaBars } from "react-icons/fa";
-import AdminSideNav from "../../pages/doctor/AdminSideNav";
-import doctorimg from "../../assets/istockphoto-92347250-612x612.jpg";
-import logo from "../../assets/logo.jpg";
+import logo from "/arak-dental-logo.jpeg";
 import toast from "react-hot-toast";
+import AdminSideNav from "./AdminSideNav";
 
 const PatientState = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -276,49 +275,38 @@ const PatientState = () => {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-screen overflow-y-auto w-full">
+      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <>
-          <div
-            className="fixed inset-0 bg-opacity-40 z-40"
+            <div
+            className="fixed inset-0 bg-black opacity-40 z-40"
             onClick={() => setSidebarOpen(false)}
-          />
-          {/* <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
+            />
+            <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
             <AdminSideNav />
-          </div> */}
+            </div>
         </>
       )}
-
-      <div className="flex h-full">
-        {/* <div className="hidden md:block">
-          <AdminSideNav />
-        </div> */}
-
-        <div className="flex-1 flex flex-col overflow-y-auto bg-[#f7fafc]">
-          <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-            <div className="flex items-center space-x-2 font-semibold text-xl text-[#299eed]">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="md:hidden text-gray-700 text-2xl mr-2"
-              >
-                <FaBars />
-              </button>
-              <img src={logo} alt="Logo" className="w-8 h-8" />
-              <span>Clinic System</span>
+      {/* Top bar for mobile */}
+              <div className="md:hidden flex justify-between items-center p-4 bg-white shadow fixed top-0 left-0 right-0 z-40">
+                <button onClick={() => setSidebarOpen(true)} className="text-xl text-gray-700">
+                  <FaBars />
+                </button>
+                <div className="flex items-center space-x-2 font-semibold text-xl text-[#299eed]">
+              <img src={logo} alt="Logo" className="w-8 h-8 rounded-full" />
+              <span>Arak Dental Clinic</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <FaBell className="text-xl text-gray-600 cursor-pointer" />
-              <img
-                src={doctorimg}
-                className="w-10 h-10 rounded-full object-cover"
-                alt="Doctor"
-              />
-            </div>
-          </nav>
-
+                <div className="w-6" /> {/* Spacer */}
+              </div>
+      <div className="flex">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <main className="flex-1 p-4 sm:p-6 md:p-8 space-y-8 bg-[#f8fafc]">
-            <h1 className="text-2xl sm:text-3xl font-bold capitalize">{selectedPatient.name}</h1>
-
+            <div className="flex items-center space-x-2 md:font-semibold md:text-xl text-sm text-[#299eed]">
+              {/* <img src={logo} alt="Logo" className="w-8 h-8 rounded-full sm:hidden md:block" /> */}
+              <span>Arak Dental Clinic</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold capitalize mt-10">{selectedPatient.name}</h1>
             {/* Personal Info */}
             <section className="bg-white p-6 rounded shadow">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Personal Information</h2>

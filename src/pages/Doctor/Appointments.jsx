@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { LuChevronLeft, LuChevronRight, LuPlus, LuSearch, LuCalendar } from 'react-icons/lu';
 import { fetchAppointments } from '../../services/firebase/appointmentsServiceDoctor';
+import { FaBars } from 'react-icons/fa';
+import AdminSideNav from './AdminSideNav';
 
 export default function AppointmentsPage() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [selectedDate, setSelectedDate] = useState(new Date()); // Default to today's date
   const [appointments, setAppointments] = useState([]); // State to hold appointments
@@ -70,7 +73,7 @@ export default function AppointmentsPage() {
             const newSelectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
             setSelectedDate(newSelectedDate);
           }}
-          className={`h-10 w-10 flex items-center justify-center cursor-pointer rounded-md text-sm font-medium transition-colors ${
+          className={`h-10 flex items-center justify-center cursor-pointer rounded-md text-sm font-medium transition-colors ${
             isSelected 
               ? 'bg-blue-600 text-white' 
               : isToday 
@@ -87,18 +90,31 @@ export default function AppointmentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="p-4 bg-gray-50">
+      {sidebarOpen && (
+        <>
+            <div
+            className="fixed inset-0 bg-black opacity-40 z-40"
+            onClick={() => setSidebarOpen(false)}
+            />
+            <div className="fixed top-0 left-0 w-64 h-full bg-white z-50 shadow-lg overflow-y-auto">
+            <AdminSideNav />
+            </div>
+        </>
+      )}
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+      {/* Top bar for mobile */}
+      <div className="md:hidden flex justify-between items-center p-4 bg-white shadow fixed top-0 left-0 right-0 z-40">
+        <button onClick={() => setSidebarOpen(true)} className="text-xl text-gray-700">
+          <FaBars />
+        </button>
+        <h1 className="text-xl font-bold text-[#299eed]">Appointments</h1>
+        <div className="w-6" /> {/* Spacer */}
+      </div>
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 font-medium flex items-center space-x-2">
-            <LuPlus className="w-4 h-4" />
-            <span>New Appointment</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto  sm:px-6 lg:px-8">
+          <h1 className="text-xl md:text-4xl font-bold text-gray-900 mb-6 text-center">Appointments</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 ">
           {/* Left Panel - Calendar and Search */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -144,7 +160,7 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Right Panel - Appointments for Selected Day */}
-          <div className="lg:col-span-1 h-screen max-h-180 overflow-y-auto">
+          <div className="lg:col-span-1 h-screen">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Appointments for {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -166,7 +182,7 @@ export default function AppointmentsPage() {
                       </span>
                     </div>
                     <div className="text-sm font-medium text-gray-900 mb-1">
-                      {appointment.patient_id}
+                      {appointment.patient_name || 'Unknown Patient'}
                     </div>
                     <div className="text-xs text-gray-500">
                       {appointment.reason_for_visit || 'No reason provided'}
@@ -185,6 +201,7 @@ export default function AppointmentsPage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }
