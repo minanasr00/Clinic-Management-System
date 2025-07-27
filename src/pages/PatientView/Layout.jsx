@@ -1,9 +1,9 @@
 import { useContext, useRef, useState } from 'react'
-import { Cross } from 'lucide-react'
 import { Link, Outlet, useNavigate } from 'react-router';
 import { TiThMenuOutline } from "react-icons/ti";
 import { handleSignOut } from '../../services/firebase/auth';
 import { AuthContext } from '../../context/Authcontext';
+import doctorimg from "/arak-dental-logo.jpeg";
 
 
 export default function Layout() {
@@ -17,13 +17,16 @@ export default function Layout() {
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                   <div className="flex items-center space-x-1">
                     <div className="w-8 h-8 bg-[#0F141A] rounded-full flex items-center justify-center">
-                      <Cross className="w-4 h-4 text-white" />
+                      <img
+                        src={doctorimg}
+                        alt="Doctor"
+                        className="w-full h-full rounded-full"
+                      />
                     </div>
-                    <span className="text-xl font-semibold font-[lexend] text-gray-900">Dr. Bennett's Clinic</span>
+                    <span className="text-xl font-semibold font-[lexend] text-gray-900">Arak Dental Clinic</span>
                   </div>
                 <nav className="flex items-center space-x-4">
                     <div className='sm:hidden md:flex items-center space-x-6'>
-
                         {navItems.map((item) => (
                         <Link
                         to={item}    
@@ -60,13 +63,13 @@ export default function Layout() {
                             }
                         }}/>
                     </div>
-                   
+
                     <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-400 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-lg">{(user?.displayName?.charAt(0).toUpperCase())}{user?.displayName?.charAt(1)}</span>
                   </div>
                   </nav>
             </div>
-             <div ref={ref} className='sm:hidden md:hidden flex flex-col text-center gap-1 items-center space-x-1 border border-t-0 border-gray-100'>
+            <div ref={ref} className='sm:hidden md:hidden flex flex-col text-center gap-1 items-center space-x-1 border border-t-0 border-gray-100'>
                         {navItems.map((item) => (
                       <Link
                         to={item}
