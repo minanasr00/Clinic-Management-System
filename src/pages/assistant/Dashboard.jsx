@@ -26,7 +26,7 @@ const Dashboard = () => {
     patients: 0,
     confirmed: 0,
     upcoming: 0,
-    unreadChats: 3,
+    unreadChats: 4,
   });
 
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
@@ -50,7 +50,7 @@ const Dashboard = () => {
   upcoming: upcomingCount,
   patients: patientCount,
   confirmed: completedCount,
-  unreadChats: 3, // ← رقم ثابت
+  unreadChats: 4, // ← رقم ثابت
 });
 
       } catch (err) {
@@ -238,7 +238,7 @@ if (key === "unreadChats") {
                 </div>
               </div>
             )}
-            {showUnreadTable && (
+            {/* {showUnreadTable && (
   <div className="bg-[#f9fcfd] p-6 rounded-xl shadow mb-10">
     <h3 className="text-xl font-bold mb-4">Unread Messages</h3>
     <div className="overflow-x-auto">
@@ -272,7 +272,7 @@ if (key === "unreadChats") {
       </table>
     </div>
   </div>
-)}
+)} */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               <div className="h-full mt-0">

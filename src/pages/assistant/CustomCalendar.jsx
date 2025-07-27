@@ -36,6 +36,7 @@ export default function CustomCalendar({ selectedDate, setSelectedDate }) {
   };
 
   const calendar = generateCalendar();
+  const minSelectableDate = today.date(28).startOf("day"); // ⛔ الأيام قبل 28 غير مسموح بها
 
   return (
     <div className="bg-white p-6 rounded-xl shadow w-full h-fit flex flex-col justify-between">
@@ -60,13 +61,12 @@ export default function CustomCalendar({ selectedDate, setSelectedDate }) {
 
       {/* Days of week */}
       <div className="grid grid-cols-7 text-center text-sm font-semibold text-gray-600 mb-2">
-  {daysShort.map((day) => (
-    <div key={day} className="flex items-center justify-center h-10 w-10">
-      {day}
-    </div>
-  ))}
-</div>
-
+        {daysShort.map((day) => (
+          <div key={day} className="flex items-center justify-center h-10 w-10">
+            {day}
+          </div>
+        ))}
+      </div>
 
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-2 text-center text-sm flex-grow">
@@ -75,29 +75,30 @@ export default function CustomCalendar({ selectedDate, setSelectedDate }) {
           const isInMonth = day.isSame(currentMonth, "month");
           const isSelected = selectedDate === day.format("YYYY-MM-DD");
 
+          const isDisabled =
+            !isInMonth || day.isBefore(minSelectableDate, "day");
+
           return (
             <button
-  key={index}
-  onClick={() => handleSelect(day)}
-  disabled={!isInMonth}
-  className={`w-10 h-10 flex items-center justify-center rounded-full transition font-medium 
-    ${
-      isSelected
-        ? "bg-sky-700 text-white"
-        : isToday
-        ? "bg-blue-100 text-sky-800"
-        : "text-gray-800"
-    }
-    ${!isInMonth ? "opacity-30 cursor-not-allowed" : "hover:bg-blue-100"}
-  `}
->
-  {day.date()}
-</button>
-
+              key={index}
+              onClick={() => handleSelect(day)}
+              disabled={isDisabled}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition font-medium 
+                ${
+                  isSelected
+                    ? "bg-sky-700 text-white"
+                    : isToday
+                    ? "bg-blue-100 text-sky-800"
+                    : "text-gray-800"
+                }
+                ${isDisabled ? "opacity-30 cursor-not-allowed" : "hover:bg-blue-100"}
+              `}
+            >
+              {day.date()}
+            </button>
           );
         })}
       </div>
     </div>
   );
 }
-
