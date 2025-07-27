@@ -19,7 +19,7 @@ const links = [
   { to: "/assistant/appointments", label: "Appointments", icon: <CalendarDays size={20} /> },
   { to: "/assistant/patients", label: "Patients", icon: <Users2 size={20} /> },
   { to: "/assistant/messages", label: "Messages", icon: <FiMessageCircle size={20} /> },
-  { to: "/settings", label: "Settings", icon: <Settings size={20} /> },
+  // { to: "/settings", label: "Settings", icon: <Settings size={20} /> },
 ];
 
 const Sidebar = () => {
