@@ -363,8 +363,8 @@ const handleSubmit = async () => {
 
             <div className="flex-1 p-6">
               <p className="text-sm text-gray-600 mb-6">
-                <strong>Doctor:</strong> Dr. Masia Glura &nbsp;|&nbsp;
-                <strong>Hospital:</strong> Barala Hospital
+                <strong>Doctor:</strong> Mohamad Mahmoud &nbsp;|&nbsp;
+                <strong>Hospital:</strong> Arak Dental Clinic
               </p>
               <label className="block mb-2 font-semibold">Select Patient</label>
 <select
@@ -442,11 +442,12 @@ const handleSubmit = async () => {
   className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
 >
   <option value="">-- Choose Visit Type --</option>
-  <option value="Checkup">Checkup</option>
-  <option value="Consultation">Consultation</option>
-  <option value="Follow-up">Follow-up</option>
-  <option value="Emergency">Emergency</option>
-  <option value="Vaccination">Vaccination</option>
+  <option value="Routine Dental Checkup">Routine Dental Checkup</option>
+  <option value="Follow-up Visit">Follow-up Visit</option>
+  <option value="Dental Consultation">Dental Consultation</option>
+  <option value="Fluoride Treatment or Dental Sealants">Fluoride Treatment or Dental Sealants</option>
+  <option value="Dental X-ray or Imaging">Dental X-ray or Imaging</option>
+  <option value="Emergency Dental Care">Emergency Dental Care</option>
 </select>
    <label className="block  mb-1 font-semibold">Status Type</label>
               <select

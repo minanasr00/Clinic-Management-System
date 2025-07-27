@@ -430,21 +430,21 @@ const appointmentSchema = z.object({
 });
 
 const visitTypes = [
-  "General Checkup",
-  "Follow-up",
-  "Consultation",
-  "Emergency",
-  "Vaccination",
-  "Lab Test"
+  "Routine Dental Checkup",
+  "Follow-up Visit",
+  "Dental Consultation",
+  "Fluoride Treatment or Dental Sealants",
+  "Dental X-ray or Lab Test",
+  "Emergency"
 ];
 
 const visitReasons = [
-  "Routine Examination",
-  "Cold/Flu Symptoms",
-  "Injury/Pain",
-  "Chronic Condition",
-  "Medication Refill",
-  "Test Results",
+  "Routine Cleaning or Examination",
+  "Toothache or Pain",
+  "Broken or Chipped Tooth",
+  "Bleeding Gums",
+  "Cavity or Filling Issue",
+  "Results Review (X-ray/Lab)",
   "Other"
 ];
 
@@ -598,8 +598,8 @@ export default function AppointmentPage() {
       <h1 className="text-2xl font-bold text-center mb-6">Make An Appointment</h1>
       
       <div className="mb-6 text-center">
-        <p className="text-lg font-semibold">Doctor: Dr. Ashraf Mohamed</p>
-        <p className="text-md text-gray-600">Clinic: Ashraf Medical Center</p>
+        <p className="text-lg font-semibold">Doctor: Mohamad Mahmoud</p>
+        <p className="text-md text-gray-600">Clinic: Arak Dental Clinic</p>
       </div>
 
       {appointmentConfirmed ? (
