@@ -462,15 +462,15 @@ const PatientChat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-16 pl-64 pr-4 mt-0">
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
+    <div className="min-h-screen bg-white pt-16  pr-4 mt-0">
+      {/* <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-800">Medicall</h1>
-      </nav>
+      </nav> */}
       {/* <Sidebar /> */}
 
       <div className="flex-1 flex flex-col">
         <div className="ml-0 flex flex-1 flex-col md:flex-row">
-          <div className="w-fit md:w-1/3 lg:w-1/2 p-4 bg-white">
+          <div className="w-fit md:w-1/3 lg:w-1/3 p-4 bg-white">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               Chat with Assistants
             </h2>
@@ -504,7 +504,7 @@ const PatientChat = () => {
 
           <div className="flex-1 flex justify-center items-stretch bg-gray-100 p-4">
             {selectedAssistant ? (
-              <div className="w-full h-144 max-w-2xl bg-white rounded-lg shadow-lg flex flex-col">
+              <div className="w-full h-160  bg-white rounded-lg shadow-lg flex flex-col">
                 <div className="flex items-center gap-4 px-6 py-4 shadow-sm bg-white rounded-t-lg">
                   <img
                     src={selectedAssistant.avatar || `https://i.pravatar.cc/100?u=${selectedAssistant.id}`}

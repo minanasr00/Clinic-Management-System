@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CreditCard, DollarSign } from 'lucide-react'
 
-export default function Payment() {
+export default function   Payment() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash')
   const [isProcessing, setIsProcessing] = useState(false)
 
