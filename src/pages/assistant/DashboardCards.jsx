@@ -11,7 +11,7 @@ const DashboardCards = ({ stats, onCardClick }) => {
       badgeColor: "bg-blue-600",
     },
     {
-      label: "Confirmed Appointments",
+      label: "Completed Appointments",
       key: "confirmed",
       value: stats.confirmed,
       icon: <FaCheckCircle className="text-green-600 text-2xl" />,
