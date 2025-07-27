@@ -262,11 +262,12 @@ useEffect(() => {
     setIsMobile(isNowMobile);
   };
 
-  checkMobile(); // أول مرة
+  checkMobile(); // عند التحميل الأول
   window.addEventListener("resize", checkMobile);
 
   return () => window.removeEventListener("resize", checkMobile);
 }, []);
+
 
 
   // 🔁 تحديث مباشر بالرسايل الجديدة
@@ -322,13 +323,15 @@ useEffect(() => {
     await markMessagesAsRead(chatId, currentUserId);
     await fetchPatientsWithLastMessage();
 
+    // 👇 ضروري لموبايل عشان يخفي القائمة ويعرض الشات
     if (isMobile) {
-      setShowPatientList(false); // 👈 إخفاء القائمة عند الشات
+      setShowPatientList(false);
     }
   } catch (error) {
     console.error("Error selecting patient:", error);
   }
 };
+
 
 
 

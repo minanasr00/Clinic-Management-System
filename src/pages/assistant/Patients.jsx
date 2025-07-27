@@ -321,7 +321,7 @@ return (
     <Sidebar />
 
     {/* Main Section */}
-    <section className="pt-20 px-4 md:pl-60 pb-10 bg-white min-h-screen font-sans mt-5">
+    <section className="pt-20 px-4 md:pl-60 pb-10 bg-white min-h-screen font-sans mt-5 ml-7">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Patient List */}
         {(!isMobile || showPatientList) && (
