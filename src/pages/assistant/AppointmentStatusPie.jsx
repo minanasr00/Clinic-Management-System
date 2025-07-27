@@ -39,7 +39,7 @@ const AppointmentStatusPie = () => {
       <h2 className="text-lg font-semibold text-gray-900 mb-2">
         Appointment Status
       </h2>
-      <div className="w-500 max-w-sm mx-auto">
+      <div className="w-500 max-w-sm mx-auto h-fit">
         <Pie data={data} options={options} />
       </div>
     </div>

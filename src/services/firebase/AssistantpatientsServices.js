@@ -21,3 +21,4 @@ export const fetchAllPatients = async () => {
 
   return patients;
 };
+

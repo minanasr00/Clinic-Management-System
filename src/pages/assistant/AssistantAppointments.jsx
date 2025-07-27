@@ -44,6 +44,7 @@ export default function AssistantAppointments() {
   const [formError, setFormError] = useState("");
   const [viewedAppointment, setViewedAppointment] = useState(null);
   const [birthDate, setBirthDate] = useState("");
+const [patientAge, setPatientAge] = useState("");
 
 
   useEffect(() => {
@@ -180,11 +181,12 @@ const handleSubmit = async () => {
     }
 
     // Validate phone format (digits only, 8-15 length)
-    const phoneRegex = /^[0-9]{8,15}$/;
-    if (!phoneRegex.test(phone)) {
-      setFormError("Please enter a valid phone number (8–15 digits).");
-      return;
-    }
+    const phoneRegex = /^01[0-9]{9}$/;
+if (!phoneRegex.test(phone)) {
+  setFormError("Please enter a valid Egyptian phone number starting with 01 and 11 digits long.");
+  return;
+}
+
   }
 
   // All good – prepare appointment object
@@ -194,9 +196,13 @@ const handleSubmit = async () => {
     patient_id: patientId || "custom-" + Date.now(),
     patient_name: patientName,
     patient_phone: phone,
-    patient_age: birthDate
+    patient_age: patientId
+  ? patientAge // إذا كان مريض موجود
+  : (birthDate
       ? new Date().getFullYear() - new Date(birthDate).getFullYear()
-      : "",
+      : ""),
+
+
     patient_gender: gender,
     payment_amount: Number(paymentAmount),
     payment_method: paymentMethod,
@@ -287,13 +293,14 @@ const handleSubmit = async () => {
 
 
   return (
-    <div className="min-h-screen bg-white pt-16 pl-64 pr-4 mt-0">
+    <div className="min-h-screen bg-white pt-16 px-4 md:px-8 lg:pl-64 transition-all duration-300">
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">Medicall</h1>
+        <h1 className="text-xl ml-7 font-bold text-gray-800">Medicall</h1>
       </nav>
       <Sidebar />
       <div className="max-w-6xl mx-auto py-8">
-        <div className="flex justify-between items-center mb-6 ml-5">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 ml-5">
+
           <h3 className="text-2xl font-semibold text-gray-800">
             Appointments Table
             <br />
@@ -330,12 +337,15 @@ const handleSubmit = async () => {
 )}
 
         {showForm && (
-          <div className="flex flex-col md:flex-row bg-white shadow rounded-xl overflow-hidden ml-5 mb-10">
-            <div className="p-6">
+          <div className="flex flex-col lg:flex-row bg-white shadow rounded-xl overflow-hidden ml-0 md:ml-5 mb-10">
+
+            <div className="p-4 sm:p-6 w-full lg:w-1/2">
+
               <label className="block mb-2 font-semibold ">Select Date</label>
               <CustomCalendar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
              <label className="block mb-2 font-semibold mt-5">Select Time</label>
-              <div className="grid grid-cols-4 gap-2 max-h-64 mb-20">
+              <div className="mb-6 md:mb-20">
+ <div className="flex flex-col gap-2 max-h-40 overflow-y-auto md:grid md:grid-cols-4 md:max-h-none md:overflow-visible">
       {TIME_SLOTS.map((slot) => {
         const formatted = getFormattedTime(slot);
         const isBooked = bookedTimes.includes(formatted);
@@ -355,32 +365,37 @@ const handleSubmit = async () => {
         );
       })}
     </div>
-              
-
-
-
+    </div>
             </div>
+            <div className="p-4 sm:p-6 w-full lg:w-1/2">
 
-            <div className="flex-1 p-6">
               <p className="text-sm text-gray-600 mb-6">
                 <strong>Doctor:</strong> Mohamad Mahmoud &nbsp;|&nbsp;
                 <strong>Hospital:</strong> Arak Dental Clinic
               </p>
               <label className="block mb-2 font-semibold">Select Patient</label>
 <select
-  onChange={(e) => {
-    const selectedId = e.target.value;
-    setPatientId(selectedId);
-    const selectedPatient = patients.find((p) => p.id === selectedId);
-    if (selectedPatient) {
-      setPatientName(
-        selectedPatient.fullName || selectedPatient.name 
-      );
-    }
+ onChange={(e) => {
+  const selectedId = e.target.value;
+  setPatientId(selectedId);
+  const selectedPatient = patients.find((p) => p.id === selectedId);
+  if (selectedPatient) {
+    setPatientName(selectedPatient.fullName || selectedPatient.name);
     setPhone(selectedPatient.phone || "");
     setBirthDate(selectedPatient.dob || "");
     setGender(selectedPatient.gender || "");
-  }}
+
+    // ✅ احسب العمر واحفظه في state
+    if (selectedPatient.dob) {
+      const birthYear = new Date(selectedPatient.dob).getFullYear();
+      const age = new Date().getFullYear() - birthYear;
+      setPatientAge(age);
+    } else {
+      setPatientAge(""); // fallback
+    }
+  }
+}}
+
   className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
 >
   <option value="">-- Choose a patient --</option>
@@ -403,7 +418,12 @@ const handleSubmit = async () => {
 <input
   type="tel"
   value={phone}
-  onChange={(e) => setPhone(e.target.value)}
+    onChange={(e) => {
+    // اسمح فقط بالأرقام
+    const numeric = e.target.value.replace(/\D/g, "");
+    setPhone(numeric);
+  }}
+  maxLength={11}
   placeholder="Enter patient's phone"
   disabled={isExistingPatientSelected}
   className="w-full mb-4 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700 disabled:bg-gray-100"
@@ -496,7 +516,7 @@ const handleSubmit = async () => {
               
 
             
-              <div className="mt-6 flex justify-between">
+              <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between">
                 <button onClick={resetForm} className="px-6 py-3 border rounded-full text-sky-700 hover:bg-gray-100">
                   Clear
                 </button>
@@ -517,62 +537,90 @@ const handleSubmit = async () => {
   />
 </div>
 
-        <div className="bg-white shadow rounded-xl overflow-x-auto ml-5">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-  <tr>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient Name</th>
-    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th> */}
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booked By</th>
-    <th className=" px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-  </tr>
-</thead>
-<tbody>
-  {appointments
-  .filter((appt) =>
-    appt.patient_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  .map((appt) => {
-
-    const dateObj = new Date(appt.start_time.seconds * 1000);
-    const formattedDate = dateObj.toLocaleDateString();
-    const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    return (
-      <tr key={appt.id}>
-        <td className="px-6 py-4 text-sm text-gray-800">{appt.patient_name }</td>
-        {/* <td className="px-6 py-4 text-sm text-gray-800">{appt.patient_id}</td> */}
-        <td className="px-6 py-4 text-sm  text-sky-600">{formattedDate}</td>
-        <td className="px-6 py-4 text-sm text-sky-600">{formattedTime}</td>
-        <td className="px-6 py-4 text-sm">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold
-            ${appt.status === "completed" ? "bg-green-100 text-green-800"
-              : appt.status === "scheduled" ? "bg-blue-100 text-blue-800"
-              : appt.status === "cancelled" ? "bg-red-100 text-red-800"
-              : appt.status === "delayed" ? "bg-yellow-100 text-yellow-800"
-              : "bg-gray-100 text-gray-800"}`}>
-            {appt.status}
-          </span>
-        </td>
-        <td className="px-6 py-4 text-sm capitalize">
-          {appt.booked_by === "assistant" ? "Assistant" : "Patient"}
-        </td>
-        <td className="px-6 py-4 text-sm space-x-5">
-          <button onClick={() => handleEdit(appt)} className="text-sky-700 hover:underline">Edit</button>
-          <button onClick={() => confirmDelete(appt.id)} className="text-red-600 hover:underline">Delete</button>
-          <button onClick={() => handleView(appt)} className="text-green-600 hover:underline">View</button>
-
-        </td>
+        {/* Table for md+ screens */}
+<div className="bg-white shadow rounded-xl overflow-x-auto ml-5 hidden md:block">
+  <table className="min-w-full divide-y divide-gray-200 text-sm">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-4 py-3 text-left font-semibold text-gray-600">Patient</th>
+        <th className="px-4 py-3 text-left font-semibold text-gray-600">Date</th>
+        <th className="px-4 py-3 text-left font-semibold text-gray-600">Time</th>
+        <th className="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
+        <th className="px-4 py-3 text-left font-semibold text-gray-600">Booked By</th>
+        <th className="px-4 py-3 text-left font-semibold text-gray-600">Actions</th>
       </tr>
-    );
-  })}
-</tbody>
+    </thead>
+    <tbody className="bg-white divide-y divide-gray-100">
+      {appointments
+        .filter((appt) => appt.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+        .map((appt) => {
+          const dateObj = new Date(appt.start_time.seconds * 1000);
+          const formattedDate = dateObj.toLocaleDateString();
+          const formattedTime = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-          </table>
+          return (
+            <tr key={appt.id}>
+              <td className="px-4 py-3 text-gray-800">{appt.patient_name}</td>
+              <td className="px-4 py-3 text-sky-600">{formattedDate}</td>
+              <td className="px-4 py-3 text-sky-600">{formattedTime}</td>
+              <td className="px-4 py-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold
+                  ${appt.status === "completed" ? "bg-green-100 text-green-800"
+                    : appt.status === "scheduled" ? "bg-blue-100 text-blue-800"
+                    : appt.status === "cancelled" ? "bg-red-100 text-red-800"
+                    : appt.status === "delayed" ? "bg-yellow-100 text-yellow-800"
+                    : "bg-gray-100 text-gray-800"}`}>
+                  {appt.status}
+                </span>
+              </td>
+              <td className="px-4 py-3 capitalize"> {appt.booked_by === "assistant" ? "Assistant" : "Patient"}</td>
+              <td className="px-4 py-3 space-x-2 whitespace-nowrap">
+                <button onClick={() => handleEdit(appt)} className="text-sky-700 hover:underline">Edit</button>
+                <button onClick={() => confirmDelete(appt.id)} className="text-red-600 hover:underline">Delete</button>
+                <button onClick={() => handleView(appt)} className="text-green-600 hover:underline">View</button>
+              </td>
+            </tr>
+          );
+        })}
+    </tbody>
+  </table>
+</div>
+
+{/* Cards view for small screens */}
+<div className="md:hidden space-y-4 ml-5 mt-4">
+  {appointments
+    .filter((appt) => appt.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+    .map((appt) => {
+      const dateObj = new Date(appt.start_time.seconds * 1000);
+      const formattedDate = dateObj.toLocaleDateString();
+      const formattedTime = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      return (
+        <div key={appt.id} className="bg-white p-4 rounded-xl shadow space-y-2">
+          <div className="font-semibold text-sky-700">{appt.patient_name}</div>
+          <div className="text-sm text-gray-600">Date: {formattedDate}</div>
+          <div className="text-sm text-gray-600">Time: {formattedTime}</div>
+          <div className="text-sm">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold
+              ${appt.status === "completed" ? "bg-green-100 text-green-800"
+                : appt.status === "scheduled" ? "bg-blue-100 text-blue-800"
+                : appt.status === "cancelled" ? "bg-red-100 text-red-800"
+                : appt.status === "delayed" ? "bg-yellow-100 text-yellow-800"
+                : "bg-gray-100 text-gray-800"}`}>
+              {appt.status}
+            </span>
+          </div>
+          <div className="text-sm capitalize text-gray-600">Booked By: {appt.booked_by}</div>
+          <div className="flex gap-3 mt-2 text-sm">
+            <button onClick={() => handleEdit(appt)} className="text-sky-700 hover:underline">Edit</button>
+            <button onClick={() => confirmDelete(appt.id)} className="text-red-600 hover:underline">Delete</button>
+            <button onClick={() => handleView(appt)} className="text-green-600 hover:underline">View</button>
+          </div>
         </div>
+      );
+    })}
+</div>
+
         {showDeleteModal && (
   <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-50">
     <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -613,7 +661,8 @@ const handleSubmit = async () => {
         <p><strong>Payment Method:</strong> {viewedAppointment.payment_method}</p>
         <p><strong>Payment Amount:</strong> ${viewedAppointment.payment_amount}</p>
         <p><strong>Payment Status:</strong> {viewedAppointment.payment_status}</p>
-        <p><strong>Booked By:</strong> {viewedAppointment.booked_by}</p>
+        <p><strong>Booked By:</strong> {viewedAppointment.booked_by === "assistant" ? "Assistant" : "Patient"}
+        </p>
       </div>
 
       <button

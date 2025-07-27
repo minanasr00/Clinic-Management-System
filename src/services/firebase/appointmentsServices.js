@@ -11,8 +11,23 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "./config";
+import { onSnapshot } from "firebase/firestore";
+// ✅ Real-time listener for upcoming appointments
+export const listenToUpcomingAppointments = (callback) => {
+  const q = query(
+    collection(db, "appointments"),
+    where("status", "in", ["pending", "scheduled", "delayed"])
+  );
 
-// ✅ عدد المواعيد القادمة (scheduled / pending / delayed)
+  return onSnapshot(q, (snapshot) => {
+    const appointments = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    callback(appointments);
+  });
+};
+
 export const getUpcomingAppointmentsCount = async () => {
   const q = query(
     collection(db, "appointments"),

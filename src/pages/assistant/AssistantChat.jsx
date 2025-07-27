@@ -215,6 +215,8 @@ import { db } from "../../services/firebase/config";
 const AssistantChat = () => {
   const { user } = useContext(AuthContext);
   const currentUserId = user?.uid || "";
+const [isMobile, setIsMobile] = useState(false);
+const [showPatientList, setShowPatientList] = useState(true);
 
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -254,6 +256,18 @@ const AssistantChat = () => {
       console.error("Error fetching patients/messages:", error);
     }
   };
+useEffect(() => {
+  const checkMobile = () => {
+    const isNowMobile = window.innerWidth <= 768;
+    setIsMobile(isNowMobile);
+  };
+
+  checkMobile(); // أول مرة
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
+
 
   // 🔁 تحديث مباشر بالرسايل الجديدة
   useEffect(() => {
@@ -305,16 +319,17 @@ const AssistantChat = () => {
     const chatId = await getOrCreateChat(currentUserId, patient.id);
     setChatId(chatId);
     await loadMessages(chatId);
-
-    // ✅ هنا بنعلم الرسائل كمقروءة
     await markMessagesAsRead(chatId, currentUserId);
-
-    // ✅ وبعد كده نحدث قائمة المرضى
     await fetchPatientsWithLastMessage();
+
+    if (isMobile) {
+      setShowPatientList(false); // 👈 إخفاء القائمة عند الشات
+    }
   } catch (error) {
     console.error("Error selecting patient:", error);
   }
 };
+
 
 
 
@@ -352,131 +367,165 @@ const AssistantChat = () => {
     patient.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="min-h-screen bg-white pt-16 pl-64 pr-4 mt-0">
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">Medicall</h1>
-      </nav>
-      <Sidebar />
+return (
+  <div className={`min-h-screen bg-white pt-16 ${isMobile ? '' : 'pl-64'} pr-4`}>
 
-      <div className="flex-1 flex flex-col">
-        <div className="ml-0 flex flex-1 flex-col md:flex-row">
-          {/* Patient List */}
-          <div className="w-fit md:w-1/3 lg:w-1/2 p-4 bg-white ">
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">Chat with Patients</h2>
-            <input
-              type="text"
-              placeholder="Search by name..."
-              className="mb-4 px-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+    <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
+      <h1 className="text-xl ml-7 font-bold text-gray-800">Medicall</h1>
+    </nav>
 
-            <div className="flex flex-col gap-3">
-             {filteredPatients.map((patient) => (
-  <div
-    key={patient.id}
-    className={`transition-all duration-200  rounded-lg p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50 ${
-      selectedPatient?.id === patient.id ? "border-sky-500 bg-sky-50" : ""
-    }`}
-    onClick={() => handlePatientSelect(patient)}
-  >
-    <img
-      src={patient.avatar || `https://i.pravatar.cc/100?u=${patient.id}`}
-      alt={patient.name}
-      className="w-10 h-10 rounded-full object-cover"
-    />
-    <div className="flex-1">
-      <h4 className="font-medium text-gray-800 flex items-center justify-between">
-        {patient.name}
-        {patient.id !== selectedPatient?.id && patient.unreadCount > 0 && (
-          <span className="w-2 h-2 bg-blue-500 rounded-full ml-2" />
-        )}
-      </h4>
-      <p className="text-xs text-gray-500 truncate max-w-[180px]">
-        {patient.lastMessage?.text || "Click to chat"}
-      </p>
-    </div>
-    <FiArrowRight className="text-gray-400" />
-  </div>
-))}
+    <Sidebar />
 
-            </div>
-          </div>
+    <div className="ml-0 flex-1 flex flex-col md:flex-row">
+      {/* ✅ قائمة المرضى */}
+      {(!isMobile || (isMobile && showPatientList)) && (
+        <div className="w-full md:w-1/3 lg:w-1/2 p-4 bg-white">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            Chat with Patients
+          </h2>
+          <input
+            type="text"
+            placeholder="Search by name..."
+            className="mb-4 px-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-700"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
 
-          {/* Chat Section */}
-          <div className="flex-1 flex justify-center items-stretch bg-gray-100 p-4">
-            {selectedPatient ? (
-              <div className="w-full h-144 max-w-2xl bg-white rounded-lg shadow-lg flex flex-col">
-                <div className="flex items-center gap-4 px-6 py-4 shadow-sm bg-white rounded-t-lg">
-                  <img
-                    src={selectedPatient.avatar || `https://i.pravatar.cc/100?u=${selectedPatient.id}`}
-                    alt={selectedPatient.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{selectedPatient.name}</h3>
-                    <p className="text-sm text-gray-500">Active now</p>
-                  </div>
-                  <button
-                    onClick={handleCloseChat}
-                    className="ml-auto text-gray-400 hover:text-red-500"
-                    title="Close chat"
-                  >
-                    <FiX size={22} />
-                  </button>
+          <div className="flex flex-col gap-3">
+            {filteredPatients.map((patient) => (
+              <div
+                key={patient.id}
+                className={`transition-all duration-200 rounded-lg p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50 ${
+                  selectedPatient?.id === patient.id
+                    ? "border-sky-500 bg-sky-50"
+                    : ""
+                }`}
+                onClick={() => handlePatientSelect(patient)}
+              >
+                <img
+                  src={
+                    patient.avatar ||
+                    `https://i.pravatar.cc/100?u=${patient.id}`
+                  }
+                  alt={patient.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-800 flex items-center justify-between">
+                    {patient.name}
+                    {patient.id !== selectedPatient?.id &&
+                      patient.unreadCount > 0 && (
+                        <span className="w-2 h-2 bg-blue-500 rounded-full ml-2" />
+                      )}
+                  </h4>
+                  <p className="text-xs text-gray-500 truncate max-w-[180px]">
+                    {patient.lastMessage?.text || "Click to chat"}
+                  </p>
                 </div>
-
-                <div id="chat-container" className="flex-1 overflow-y-auto p-4 space-y-2">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`p-3 rounded-lg max-w-xs md:max-w-md text-sm shadow-sm transition-all duration-300 ${
-                        msg.senderId === currentUserId
-                          ? "bg-sky-100 self-end ml-auto border border-sky-200 w-fit"
-                          : "bg-gray-100 self-start border border-gray-200 w-fit"
-                      }`}
-                    >
-                      <p>{msg.text}</p>
-                      <p className="text-xs text-gray-400 mt-1 text-right">
-                        {formatTime(msg.createdAt)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center p-4 bg-white gap-2">
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-700"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    className="bg-sky-600 hover:bg-sky-700 text-white rounded-full p-3"
-                  >
-                    <FiArrowRight size={20} />
-                  </button>
-                </div>
+                <FiArrowRight className="text-gray-400" />
               </div>
-            ) : (
-              <div className="flex flex-col mt-50 items-center justify-start text-gray-500 w-full gap-2">
-                <FaWhatsapp className="text-6xl text-sky-700 mb-2" />
-                <h3 className="text-2xl font-semibold">Start a conversation</h3>
-                <p className="text-center text-sm text-gray-400 max-w-xs">
-                  Select a patient from the left to begin chatting. All your conversations are saved.
-                </p>
-              </div>
-            )}
+            ))}
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
+      )}
 
+      {/* زر العودة للموبايل */}
+      {isMobile && !showPatientList && (
+        <button
+          onClick={() => setShowPatientList(true)}
+          className="text-sky-600 text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md w-fit ml-4 mb-2 mt-2"
+        >
+          ← Back to Patients
+        </button>
+      )}
+
+      {/* ✅ الشات */}
+      {(!isMobile || (isMobile && !showPatientList)) && (
+        <div className="flex-1 flex justify-center items-stretch bg-gray-100 p-4">
+          {selectedPatient ? (
+            <div className="w-full h-144 max-w-2xl bg-white rounded-lg shadow-lg flex flex-col">
+              {/* Header */}
+              <div className="flex items-center gap-4 px-6 py-4 shadow-sm bg-white rounded-t-lg">
+                <img
+                  src={
+                    selectedPatient.avatar ||
+                    `https://i.pravatar.cc/100?u=${selectedPatient.id}`
+                  }
+                  alt={selectedPatient.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {selectedPatient.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">Active now</p>
+                </div>
+                <button
+                  onClick={handleCloseChat}
+                  className="ml-auto text-gray-400 hover:text-red-500"
+                  title="Close chat"
+                >
+                  <FiX size={22} />
+                </button>
+              </div>
+
+              {/* الرسائل */}
+              <div
+                id="chat-container"
+                className="flex-1 overflow-y-auto p-4 space-y-2"
+              >
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`p-3 rounded-lg max-w-xs md:max-w-md text-sm shadow-sm transition-all duration-300 ${
+                      msg.senderId === currentUserId
+                        ? "bg-sky-100 self-end ml-auto border border-sky-200 w-fit"
+                        : "bg-gray-100 self-start border border-gray-200 w-fit"
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+                    <p className="text-xs text-gray-400 mt-1 text-right">
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* إدخال الرسالة */}
+              <div className="flex items-center p-4 bg-white gap-2">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-700"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleSendMessage()
+                  }
+                />
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-sky-600 hover:bg-sky-700 text-white rounded-full p-3"
+                >
+                  <FiArrowRight size={20} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col mt-50 items-center justify-start text-gray-500 w-full gap-2">
+              <FaWhatsapp className="text-6xl text-sky-700 mb-2" />
+              <h3 className="text-2xl font-semibold">Start a conversation</h3>
+              <p className="text-center text-sm text-gray-400 max-w-xs">
+                Select a patient from the left to begin chatting. All your
+                conversations are saved.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+);
+}
 export default AssistantChat;
 

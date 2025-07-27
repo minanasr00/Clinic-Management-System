@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-/* eslint-disable react-hooks/rules-of-hooks */
+
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import DashboardCards from "./DashboardCards";
@@ -10,6 +10,7 @@ import {
   getCompletedAppointments,
   getUpcomingAppointments,
   getCompletedPatientsCount,
+  listenToUpcomingAppointments
 } from "../../services/firebase/appointmentsServices";
 import { getPatientsCount } from "../../services/firebase/AssistantpatientsServices";
 import { getAllUnreadMessagesForUser } from "../../services/firebase/chatServices";
@@ -58,8 +59,23 @@ const Dashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [user.uid]);
+useEffect(() => {
+  const unsubscribe = listenToUpcomingAppointments((data) => {
+    // ❌ فلترة unknown إذا لزم
+    const validAppointments = data.filter(
+      (appointment) => appointment.patient_name !== "Unknown"
+    );
 
+    setUpcomingAppointments(validAppointments);
+    setStats((prev) => ({
+      ...prev,
+      upcoming: validAppointments.length,
+    }));
+  });
+
+  return () => unsubscribe(); // ✅ تنظيف عند مغادرة الصفحة
+}, []);
   const handleCardClick = async (key) => {
     if (key === "unreadChats") {
     // setShowUpcomingTable(false);
@@ -88,11 +104,11 @@ if (key === "unreadChats") {
   window.location.href='/assistant/messages'
 
 
-  // setShowUpcomingTable(false);
-  // setShowConfirmedTable(false);
-  // const msgs = await getAllUnreadMessagesForUser(user.uid);
-  // setUnreadMessages(msgs);
-  // setShowUnreadTable(true);
+  setShowUpcomingTable(false);
+  setShowConfirmedTable(false);
+  const msgs = await getAllUnreadMessagesForUser(user.uid);
+  setUnreadMessages(msgs);
+  setShowUnreadTable(true);
 }
 
     if (key === "upcoming") {
@@ -114,13 +130,14 @@ if (key === "unreadChats") {
     <div className="flex min-h-screen flex-col">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">Medicall</h1>
+        <h1 className=" ml-6 text-xl font-bold text-gray-800">Medicall</h1>
       </nav>
 
       <div className="flex flex-1 mt-10 overflow-hidden">
         <Sidebar />
 
-        <main className="ml-60 p-6 bg-[#ffffff] w-full overflow-y-auto">
+        <main className="p-6 bg-[#ffffff] w-full overflow-y-auto lg:ml-64">
+
           <h2 className="text-2xl font-semibold text-grey-900 mt-5 ml-10">
             Dashboard Overview
           </h2>

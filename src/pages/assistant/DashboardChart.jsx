@@ -66,7 +66,7 @@ const DashboardChart = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mt-3 h-fit" >
+    <div className="bg-white rounded-xl shadow-md p-6 mt-3 h-80" >
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Appointments</h2>
       <div className="w-full h-72">
         <Line data={data} options={options} />
