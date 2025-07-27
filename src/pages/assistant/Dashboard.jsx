@@ -43,14 +43,15 @@ const Dashboard = () => {
           getPatientsCount(),
           getCompletedPatientsCount(),
         ]);
-        const unreadMsgs = await getAllUnreadMessagesForUser(user.uid);
+        // const unreadMsgs = await getAllUnreadMessagesForUser(user.uid);
 
-        setStats({
-        upcoming: upcomingCount,
-        patients: patientCount,
-        confirmed: completedCount,
-        unreadChats: unreadMsgs.length,
-        });
+       setStats({
+  upcoming: upcomingCount,
+  patients: patientCount,
+  confirmed: completedCount,
+  unreadChats: 3, // ← رقم ثابت
+});
+
       } catch (err) {
         console.error("Error loading stats", err);
       }
@@ -61,8 +62,8 @@ const Dashboard = () => {
 
   const handleCardClick = async (key) => {
     if (key === "unreadChats") {
-    setShowUpcomingTable(false);
-    setShowConfirmedTable(false);
+    // setShowUpcomingTable(false);
+    // setShowConfirmedTable(false);
 
     const msgs = await getAllUnreadMessagesForUser(user.uid);
 
