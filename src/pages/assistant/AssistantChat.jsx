@@ -376,7 +376,7 @@ return (
   <div className={`min-h-screen bg-white pt-16 ${isMobile ? '' : 'pl-64'} pr-4`}>
 
     <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
-      <h1 className="text-xl ml-7 font-bold text-gray-800">Medicall</h1>
+      <h1 className="text-xl ml-7 font-bold text-gray-800">Arak Dental Clinic</h1>
     </nav>
 
     <Sidebar />

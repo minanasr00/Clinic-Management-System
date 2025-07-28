@@ -133,7 +133,7 @@ if (key === "unreadChats") {
     <div className="flex min-h-screen flex-col">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center px-6 border-b border-gray-200">
-        <h1 className=" ml-6 text-xl font-bold text-gray-800">Medicall</h1>
+        <h1 className=" ml-6 text-xl font-bold text-gray-800">Arak Dental Clinic</h1>
       </nav>
 
       <div className="flex flex-1 mt-10 overflow-hidden">
