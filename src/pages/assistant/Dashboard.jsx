@@ -26,7 +26,7 @@ const Dashboard = () => {
     patients: 0,
     confirmed: 0,
     upcoming: 0,
-    unreadChats: 4,
+    unreadChats: 0,
   });
 
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
@@ -50,7 +50,10 @@ const Dashboard = () => {
   upcoming: upcomingCount,
   patients: patientCount,
   confirmed: completedCount,
-  unreadChats: 2, // سيتم تحديثها عند جلب الرسائل
+
+  unreadChats: 2, 
+
+
 });
 
       } catch (err) {
