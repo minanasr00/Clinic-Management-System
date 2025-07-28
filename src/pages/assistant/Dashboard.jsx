@@ -50,7 +50,7 @@ const Dashboard = () => {
   upcoming: upcomingCount,
   patients: patientCount,
   confirmed: completedCount,
-  unreadChats: 4, // ← رقم ثابت
+  unreadChats: 2, // سيتم تحديثها عند جلب الرسائل
 });
 
       } catch (err) {

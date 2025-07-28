@@ -8,12 +8,11 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  
-  writeBatch,
+  updateDoc,
+  writeBatch
 } from "firebase/firestore";
 
-import { db } from "./config"; // ← عدّل المسار إذا اختلف
-
+import { db } from "./config";
 
 // 🔹 إنشاء أو استرجاع محادثة بين شخصين
 export const getOrCreateChat = async (userAId, userBId) => {
@@ -38,51 +37,47 @@ export const getOrCreateChat = async (userAId, userBId) => {
   const newChat = await addDoc(chatsRef, {
     members: [userAId, userBId],
     createdAt: serverTimestamp(),
+    messages: [] // تأكد من وجود هذا الحقل لتجنب مشاكل null
   });
 
   return newChat.id;
 };
 
 // 🔹 إرسال رسالة
-export const sendMessage = async (chatId, senderId, text) => {
+export const sendMessage = async (chatId, senderId, text, receiverId) => {
   try {
-    // 1. استرجاع وثيقة المحادثة
-    const chatDocRef = doc(db, "chats", chatId);
-    const chatSnap = await getDoc(chatDocRef);
+    const chatRef = doc(db, "chats", chatId);
+    const chatSnap = await getDoc(chatRef);
 
-    if (!chatSnap.exists()) {
-      throw new Error("Chat not found");
+    const newMessage = {
+      id: Date.now().toString(),
+      senderId,
+      receiverId,
+      text,
+      createdAt: new Date(),
+      read: false,
+    };
+
+    if (chatSnap.exists()) {
+      const data = chatSnap.data();
+      const updatedMessages = [...(data.messages || []), newMessage];
+      await updateDoc(chatRef, { messages: updatedMessages });
     }
 
-    const members = chatSnap.data().members;
-
-    // 2. تحديد الـ receiverId
-    const receiverId = members.find((id) => id !== senderId);
-    if (!receiverId) {
-      throw new Error("Receiver not found in members");
-    }
-
-    // 3. إرسال الرسالة
-   
-  
-
- await addDoc(
-  collection(db, "chats", chatId, "messages"), // هذا جيد، احتفظ به
-  {
-    senderId,
-    receiverId, // تأكد أنك تمرر هذا أيضًا
-    text,
-    createdAt: serverTimestamp(),
-    read: false
-  }
-);
-
-
+    await addDoc(
+      collection(db, "chats", chatId, "messages"),
+      {
+        senderId,
+        receiverId,
+        text,
+        createdAt: serverTimestamp(),
+        read: false
+      }
+    );
   } catch (error) {
     console.error("Error sending message:", error);
   }
 };
-
 
 // 🔹 تحميل جميع الرسائل بترتيب زمني
 export const getMessages = async (chatId) => {
@@ -96,24 +91,26 @@ export const getMessages = async (chatId) => {
   }));
 };
 
-// 🔹 تعيين الرسائل كمقروءة (messages غير مقروءة ومرسلة من الطرف الآخر)
+// 🔹 تعيين الرسائل كمقروءة (Firestore batch update)
 export const markMessagesAsRead = async (chatId, currentUserId) => {
   const messagesRef = collection(db, "chats", chatId, "messages");
-  const q = query(messagesRef, where("senderId", "!=", currentUserId), where("read", "==", false));
+  const q = query(
+    messagesRef,
+    where("receiverId", "==", currentUserId),
+    where("read", "==", false)
+  );
   const snapshot = await getDocs(q);
 
   const batch = writeBatch(db);
 
   snapshot.forEach((docSnap) => {
-    const msgRef = docSnap.ref;
-    batch.update(msgRef, { read: true });
+    batch.update(docSnap.ref, { read: true });
   });
 
   await batch.commit();
 };
 
-
-
+// 🔹 الحصول على جميع الرسائل غير المقروءة لمستخدم معين
 export const getAllUnreadMessagesForUser = async (userId) => {
   try {
     const chatsRef = collection(db, "chats");
@@ -149,3 +146,4 @@ export const getAllUnreadMessagesForUser = async (userId) => {
     return [];
   }
 };
+

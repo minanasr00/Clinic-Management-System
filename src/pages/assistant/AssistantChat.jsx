@@ -250,6 +250,7 @@ const [showPatientList, setShowPatientList] = useState(true);
       const sortedPatients = patientsWithMessages.sort(
         (a, b) => b.unreadCount - a.unreadCount
       );
+      
 
       setPatients(sortedPatients);
     } catch (error) {
@@ -286,6 +287,7 @@ useEffect(() => {
 
   useEffect(() => {
     fetchPatientsWithLastMessage();
+    
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
