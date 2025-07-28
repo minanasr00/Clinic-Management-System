@@ -389,7 +389,7 @@ const PatientState = () => {
             {/* Diagnosis */}
             <section className="bg-white p-6 rounded shadow">
               <div className="flex justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">Diagnosis</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Diagnoses</h2>
                 <button
                   onClick={() => setShowDiagnosisModal(true)}
                   className="bg-[#299eed] text-white px-4 py-2 rounded text-sm hover:bg-blue-600 cursor-pointer"
